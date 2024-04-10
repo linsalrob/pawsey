@@ -1,0 +1,80 @@
+# User accounts, adding people, allocations, and acacia keys
+
+Check https://portal.pawsey.org.au
+
+Keys are stored in rclone.conf already (~/.config/rclone/rclone.conf)
+
+# Conda
+
+Install conda in
+
+```
+/software/projects/$PAWSEY_PROJECT/$USER/miniconda3
+```
+
+and then set your package directory to be on `/scratch/`
+
+```
+conda config --add pkgs_dirs /scratch/$PAWSEY_PROJECT/$USER/miniconda3/pkg_dir
+```
+
+# Partitions
+
+work partition (316 nodes, 128 cores per node)
+- Default partition, used for regular compute jobs
+- 230 GB available memory per node, which is 1.8 GB per core
+- max time 24 hours
+debug partition (8 nodes, 128 cores per node)
+- Intended for short interactive jobs
+- Use for benchmarking, testing, debugging, profiling and development
+copy partition (8 nodes, 32 cores per node)
+- Use for data transfers to/from Setonix
+- 89 GB available memory per node, which is approximately 2.78 GB per core 
+highmem partition (8 nodes, 128 cores per node)
+- Use for large memory workflows that require more than 230 GB RAM per node
+- Supports up to 980 GB of available memory per node, which is 7.65 GB per core
+long partition (8 nodes, 128 cores per node)
+- Use for jobs that require wall times between 24 and 96 hours
+
+# Data Moving
+
+Use  data-mover.pawsey.org.au  to put data onto/off of pawsey
+
+# acacia
+
+Bucket names must be unique.
+Bucket names must all be lowercase
+
+e.g. 
+  VALID: rclone mkdir pawsey1018:fame 
+INVALID: rclone mkdir pawsey1018:FAME
+
+# Account Balance
+
+You can check the status of your accounts with
+
+pawseyAccountBalance -mygroups
+
+(note the -storage option does not appear to work)
+
+# Disk quotas
+
+You can check the disk quotas for either your PROJECT or USER using these two command:
+
+```
+lfs quota -g $PAWSEY_PROJECT -h /software
+lfs quota -u $USER -h /software
+```
+
+In particular, pay attention to the number of files, usually limited to 100,000
+
+
+# Conda clean
+
+Using 
+
+```
+conda clean -af
+```
+
+wil clean up some of the conda cache files.
