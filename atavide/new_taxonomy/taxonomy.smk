@@ -39,9 +39,6 @@ rule add_taxonomy:
         lcatax = os.path.join(MMSEQS,  "{sample}", "{sample}_lca_taxonomy.tsv.gz")
     resources:
         mem_mb=8000
-    shell:
-        """
-        python scripts/merge_taxonomy.py --lca {input.lca} --taxonomy {input.tk} --output {output.lcatax}
-        """
+    script: "scripts/merge_taxonomy.py"
 
 
