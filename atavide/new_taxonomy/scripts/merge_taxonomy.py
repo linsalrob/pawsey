@@ -59,7 +59,7 @@ def write_lca(lcafile, taxa, outputfile, verbose=False):
     out.close()
     fin.close()
 
-if __name__ == "__main__":
+if __name__ == "__main2__":
     parser = argparse.ArgumentParser(description='Merge the taxonomy and the LCA data')
     parser.add_argument('-l', '--lca', help='LCA file from mmseqs easy-taxonomy', required=True)
     parser.add_argument('-t', '--taxonomy', help='taxonomy tuple file that has [taxid, taxonomy string] from taxonkit', required=True)
@@ -68,7 +68,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    taxa = parse_taxonomy(args.taxonomy, args.verbose)
-    write_lca(args.lca, taxa, args.output, args.verbose)
+    #taxa = parse_taxonomy(args.taxonomy, args.verbose)
+    #write_lca(args.lca, taxa, args.output, args.verbose)
+
+
+if __name__ == "__main__":
+    taxa = parse_taxonomy(snakemake.input.tk)
+    write_lca(snakemake.input.lca, taxa, snakemake.output.lcatax)
 
 
