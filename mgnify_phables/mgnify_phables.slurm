@@ -18,7 +18,6 @@ python ~/GitHubs/pawsey/mgnify_phables/bioproject_to_fastq.py -p $PROJECTID -d $
 
 # step 2, get the gfa file
 eval "$(conda shell.bash hook)"
-# note that bioinformatics has the wrong mmseqs2 version :(
 conda activate rclone
 rclone copy PhablesMGNify:General/data/gfa/$PROJECTID/$GFAID $PROJECTID/
 rclone copy $PROJECTID/fastq/ PhablesMGNify:General/data/fastq/$PROJECTID/ &
@@ -26,6 +25,8 @@ rclone copy $PROJECTID/fastq/ PhablesMGNify:General/data/fastq/$PROJECTID/ &
 
 
 module load singularity/3.11.4-slurm
-singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,$PWD/$PROJECTID:/phables,$HOME/gurobi.lic:/opt/gurobi/gurobi.lic testy/phables_v0.6_gogo.sif phables run --input /phables/$GFAID --reads /phables/fastq/ --output /phables/phables --threads 32
+singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,$PWD/$PROJECTID:/phables,$HOME/gurobi.lic:/opt/gurobi/gurobi.lic sif/phables_v0.6_gogo.sif phables run --input /phables/$GFAID --reads /phables/fastq/ --output /phables/phables --threads 32
+
+rclone copy $PROJECTID/phables/phables/ PhablesMGNify:General/data/phables/$PROJECTID/
 
 wait
