@@ -36,10 +36,22 @@ rclone copy $WD/fastq/ PhablesMGNify:General/data/fastq/$PROJECTID/$GFAID &
 
 module load singularity/3.11.4-slurm
 singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,$PWD/$WD:/phables,$HOME/gurobi.lic:/opt/gurobi/gurobi.lic sif/phables_v0.6_gogo.sif \
-	phables run --input /phables/$GFAID.gfa --reads /phables/fastq/ --output /phables/phables --threads 32 --prefix $GFAID
+	phables run --input /phables/$GFAID.gfa --reads /phables/fastq/ --output /phables/phables --threads 32 --prefix $GFAID --mincov 1
 
-rclone copy $WD/phables/ PhablesMGNify:General/data/phables/$PROJECTID/$GFAID/
+# tar the output files to make sending/getting easier
+
+tar --remove-files -zcf $WD/phables/${WD}_preprocess.tgz -C $WD/phables/ preprocess &
+tar zcf $WD/phables/${WD}_resolved_phages.tgz -C $WD/phables/phables/  resolved_phages/ &
+tar --remove-files -zcf $WD/phables/${WD}_phables.tgz -C $WD/phables/ phables &
+tar --remove-files -zcf $WD/phables/${WD}_log.tgz -C $WD/phables/ logs config.yaml phables.log &
+tar --remove-files -zcf $WD/phables/${WD}_postprocess.tgz -C $WD/phables/ postprocess &
 
 wait
 
-# rm -rf $WD
+
+rclone copy $WD/phables/ PhablesMGNify:General/data/phables/$PROJECTID/$GFAID/
+rclone copy $WD/phables/${WD}_resolved_phages.tgz Acacia_pawsey1018:mgnify/phables/$PROJECTID/$GFAID/${WD}_resolved_phages.tgz
+
+wait
+
+rm -rf $WD
