@@ -1,0 +1,6 @@
+name: get_peptides
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - rclone
