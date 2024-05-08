@@ -64,10 +64,13 @@ def download_fastq_files(runs, directory, verbose=False):
 
             filename = ftp.split("/")[-1]
             
-            if verbose:
-                print(f"Getting {url} and storing in {filename}", file=sys.stderr)
+            if os.path.exists(os.path.join(directory, filename)):
+                print(f"{filename} already exists in {directory}. Skipping", file=sys.stderr)
+            else:
+                if verbose:
+                    print(f"Getting {url} and storing in {filename}", file=sys.stderr)
 
-            urllib.request.urlretrieve(url, os.path.join(directory, filename))
+                urllib.request.urlretrieve(url, os.path.join(directory, filename))
 
 
 if __name__ == "__main__":

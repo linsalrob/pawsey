@@ -5,15 +5,28 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=128G
-#SBATCH -o phables-%j.out
-#SBATCH -e phables-%j.err
+#SBATCH -o slurm_logs/phables-%A_%a.out
+#SBATCH -e slurm_logs/phables-%A-%a.err
 
 set -euo pipefail
-
-if [[ -z $PROJECTID ]] || [[ -z $GFAID ]]; then
-	echo "Please define PROJECTID and GFAID as environment variables (remember no .gz on GFAID" >&2;
+DF=$1
+if [[ -z $DF ]]; then
+	echo -e "Please define a data file with one entry per line like this:\nPhablesMGNify:General/data/gfa/ERP104203/ERZ1756831.gfa.gz" >&2;
 	exit
 fi
+
+
+# To run this
+# sbatch --array=1-999%5 mgnify_phables_array.slurm gfa_data.txt.1
+#
+# After running, you might want to remove any tar archives that are essentially empty
+# copy the entire archive to a temp directory and then something like this will delete the empty ones
+# find * -type f -size -300c -exec rclone delete Acacia_pawsey1018:mgnify/phables/{} \;
+
+MGN=$(head -n $SLURM_ARRAY_TASK_ID $DF | tail -n 1)
+GFAID=`basename $MGN .gfa.gz`
+MGNDIR=`dirname $MGN`
+PROJECTID=`basename $MGNDIR`
 
 WD=${PROJECTID}_${GFAID}
 echo "Project $PROJECTID GFA: $GFAID.gfa.gz WORK DIRECTOY $WD" >&2
@@ -57,3 +70,5 @@ rclone copy $WD/phables/${WD}_resolved_phages.tgz Acacia_pawsey1018:mgnify/phabl
 wait
 
 rm -rf $WD
+
+

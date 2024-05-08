@@ -44,6 +44,7 @@ Use  data-mover.pawsey.org.au  to put data onto/off of pawsey
 
 Bucket names must be unique.
 Bucket names must all be lowercase
+Names probably have to be unique across all S3, so databases doesn't work!
 
 e.g. 
   VALID: rclone mkdir pawsey1018:fame 
@@ -78,3 +79,8 @@ conda clean -af
 ```
 
 wil clean up some of the conda cache files.
+
+
+# squeue_format
+
+By default, things like array jobs don't show up. Set the $SQUEUE_FORMAT env variable to set the columns to show
