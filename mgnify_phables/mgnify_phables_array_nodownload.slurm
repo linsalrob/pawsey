@@ -8,6 +8,23 @@
 #SBATCH -o slurm_logs/phables-%A_%a.out
 #SBATCH -e slurm_logs/phables-%A-%a.err
 
+###################################################################################
+#                                                                                 #
+# Run phables on a lot of mgnfy data. This version uses                           #
+# the  ~/GitHubs/pawsey/mgnify_phables/bioproject_accession_to_fastq_local.py     #
+# script which does not download the fastq files if we already have them          #
+#                                                                                 #
+# Use the downloader to get the fastq files separately, and then                  #
+# run this on a per project basis.                                                #
+#                                                                                 #
+# Remember you can only run 4 jobs concurrently because of the gurobi             #
+# license                                                                         #
+#                                                                                 #
+#                                                                                 #
+#                                                                                 #
+###################################################################################
+
+
 set -euo pipefail
 DF=$1
 if [[ -z $DF ]]; then
