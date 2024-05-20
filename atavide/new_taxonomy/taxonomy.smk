@@ -24,7 +24,8 @@ rule list_taxonomy:
         tk = os.path.join(MMSEQS, "{sample}", "{sample}_taxonomy.tsv.gz")
     conda: "envs/taxonkit.yaml"
     resources:
-        mem_mb=8000
+        cores=4,
+        mem_mb=16000
     shell:
         """
         zcat {input.lca} | awk '!s[$2]++ {{print $2}}' | taxonkit lineage | taxonkit reformat -P | awk -F"\t" -v OFS="\t" '{{print $1,$3}}' | gzip -c > {output.tk} 
