@@ -42,3 +42,29 @@ snakemake --profile slurm -s ~/GitHubs/pawsey/atavide/new_taxonomy/taxonomy.smk
 ```
 
 and it should make the `*.lca.taxonomy.tsv.gz` files for you
+
+# Long read taxonomy (minion and contigs)
+
+We have a new approach to calculate the long read taxonomy.
+
+For minion sequences our approach is:
+
+1. Dorado – basecalling
+2. Filtlong – QC/QA – removes low quality (<5%) and v. short reads (<1,000bp)
+  - (check for adapter sequences with fastp?)
+3. Host removal with minimap2 and samtools filters
+4. ORF calling – direct on fastq – >30 amino acids  faa.gz
+  - multiple orfs per sequence (contig/long sequence)
+5. mmseqs2 easy taxonomy on amino acids
+6. Add taxonomy labels using the same code as above
+7. Summarise taxonomy per contig (or long sequence)
+8. Make one table each for kingdom, phylum, class, order, family, genus, species
+
+Steps 1-3 are done elsewhere. The code [here](contig_taxonony_by_orf.smk) handles steps 4-8 in a snakemake script. The command to run it is 
+
+```
+snakemake -s contig_taxonony_by_orf.smk --profile slurm
+```
+
+This needs a directory called `fastq` with the `.fastq.gz` output files from host-removal. The first step will generate protein `.fasta` files directly from that `.fastq` file - no intermediate required!
+
