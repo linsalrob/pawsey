@@ -18,6 +18,7 @@ import sys
 READDIR = 'fastq'
 MMSEQS = 'mmseqs'
 SCRATCH = "/scratch/pawsey1018/edwa0468"
+SUBSYSTEMS = "subsystems"
 
 # A Snakemake regular expression matching the forward mate FASTQ files.
 # the comma after SAMPLES is important!
@@ -29,7 +30,7 @@ if len(FQSAMPLES) == 0:
 
 # include the required rules
 include: "rules/add_functions.smk"
-
+include: "rules/summarise_subsystem_counts.smk"
 
 # make some output directories
 os.makedirs(MMSEQS, exist_ok=True)
@@ -38,4 +39,5 @@ rule all_functions:
     input:
         expand(os.path.join(MMSEQS, "{sample}", "{sample}_tophit_report.gz"), sample=FQSAMPLES),
         expand(os.path.join(MMSEQS, "{sample}", "{sample}_tophit_report_subsystems.gz"), sample=FQSAMPLES),
+        SUBSYSTEMS
 

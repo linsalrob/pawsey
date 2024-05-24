@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import argparse
+import binascii
 import sqlite3
 
 __author__ = 'Rob Edwards'
@@ -50,7 +51,16 @@ def add_ss_tax(tophitfile, sqlitedb, outputfile, verbose=False):
     urs = re.compile(r'^UniRef\d+_(\w+)')
     cur = con.cursor()
 
-    with gzip.open(tophitfile, 'rt') if is_gzip(tophitfile) else open(tophitfile, 'r') as f:
+    opener = open
+    if is_gzip(tophitfile):
+        opener=gzip.open
+    
+    writeopener = open
+    if outputfile.endswith('.gz'):
+        writeopener = gzip.open
+
+    #with gzip.open(tophitfile, 'rt') if is_gzip(tophitfile) else open(tophitfile, 'r') as f:
+    with opener(tophitfile, 'rt') as f, writeopener(outputfile, 'wt') as out:
         for l in f:
             p = l.strip().split("\t")
             m = urs.match(p[0])
@@ -79,28 +89,16 @@ def add_ss_tax(tophitfile, sqlitedb, outputfile, verbose=False):
                         counts += 1
                     if results:
                         for r in results:
-                            print(f"{r}\t{int(p[1])/counts}")
+                            print(f"{r}\t{int(p[1])/counts}", file=out)
                     else:
-                        print("\t".join(p + [func, "", "", "", "", "", p[1]]))
+                        print("\t".join(p + [func, "", "", "", "", "", p[1]]), file=out)
                 else:
-                    print("\t".join(p + ["", "", "", "", "", "", p[1]]))
+                    print("\t".join(p + ["", "", "", "", "", "", p[1]]), file=out)
 
             else:
                 print(f"Can't parse ID from {p[0]}", file=sys.stderr)
-                print("\t".join(p + ["", "", "", "", "", "", p[1]]))
+                print("\t".join(p + ["", "", "", "", "", "", p[1]]), file=out)
 
     con.close()
 
-try:
-    add_ss_tax(snakemake.input.thr, snakemake.input.sql, snakemake.output.ss, False)
-except NameError:
-    parser = argparse.ArgumentParser(description=' ')
-    parser.add_argument('-f', help='mmseqs easy_taxonomy tophit_report.gz', required=True)
-    parser.add_argument('-d', help='sqlite3 database of trembl, sprot, seed', default="dummy_database.sqlite")
-    parser.add_argument('-o', help='output file', required=True)
-    parser.add_argument('-v', help='verbose output', action='store_true')
-    args = parser.parse_args()
-
-    add_ss_tax(args.f, args.d, arg.o, args.v)
-except:
-    raise
+add_ss_tax(snakemake.input.thr, snakemake.input.sql, snakemake.output.ss, False)
