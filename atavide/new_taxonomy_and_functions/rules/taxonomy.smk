@@ -22,7 +22,7 @@ rule list_taxonomy:
         lca = os.path.join(MMSEQS,  "{sample}", "{sample}_lca.tsv.gz")
     output:
         tk = os.path.join(MMSEQS, "{sample}", "{sample}_taxonomy.tsv.gz")
-    conda: "envs/taxonkit.yaml"
+    conda: "../envs/taxonkit.yaml"
     resources:
         cores=4,
         mem_mb=16000
@@ -40,6 +40,6 @@ rule add_taxonomy:
         lcatax = os.path.join(MMSEQS,  "{sample}", "{sample}_lca_taxonomy.tsv.gz")
     resources:
         mem_mb=8000
-    script: "scripts/merge_taxonomy.py"
+    script: "../scripts/merge_taxonomy.py"
 
 
