@@ -1,0 +1,5 @@
+name: mmseqs2
+channels:
+    - conda-forge
+dependencies:
+    - rclone
