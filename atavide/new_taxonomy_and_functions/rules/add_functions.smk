@@ -14,10 +14,13 @@ import sys
 rule get_sqlite:
     output:
         sql = os.path.join(SCRATCH, "uniref.sqlite")
+    conda: "../envs/rclone.yaml"
+    params:
+        sc = SCRATCH
     shell:
         """
         # curl -Lo {output.sql} http://
-        rclone copy A18:dbs/uniref.sqlite {output.sql}
+        rclone copy A18:dbs/uniref.sqlite {params.sc}
         """
 
 rule add_ss_to_tax:
