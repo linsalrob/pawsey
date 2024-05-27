@@ -24,6 +24,8 @@ ORFDIR  = 'orfs'
 FASTADIR = ORFDIR
 MMSEQS = 'mmseqs'
 TAX = 'taxonomy'
+SCRATCH = "/scratch/pawsey1018/edwa0468"
+SUBSYSTEMS = "subsystems"
 
 # A Snakemake regular expression matching the forward mate FASTQ files.
 # the comma after SAMPLES is important!
@@ -38,8 +40,10 @@ if len(FQSAMPLES) == 0:
 # include the required rules
 include: "rules/get_orfs.smk"
 include: "rules/mmseqs_single.smk"
-include: "taxonomy.smk"
+include: "rules/taxonomy.smk"
 include: "rules/summarise.smk"
+include: "rules/add_functions.smk"
+include: "rules/summarise_subsystem_counts.smk"
 
 
 # make some output directories
@@ -55,7 +59,9 @@ rule all_contig:
         os.path.join(TAX, "kingdom.tsv.gz"), os.path.join(TAX, "phylum.tsv.gz"), 
         os.path.join(TAX, "class.tsv.gz"), os.path.join(TAX, "order.tsv.gz"), 
         os.path.join(TAX, "family.tsv.gz"), os.path.join(TAX, "genus.tsv.gz"), 
-        os.path.join(TAX, "species.tsv.gz")
+        os.path.join(TAX, "species.tsv.gz"),
+        SUBSYSTEMS
+
 
 rule concatentate_taxonomies:
     input:
