@@ -14,7 +14,8 @@
 import os
 import sys
 
-DB = "UniRef50"
+DB = "UniRef100"
+#DB = "UniRef50"
 DB_SOURCE = "/home/edwa0468/Databases/mmseqs"
 MMSEQS = "mmseqs"
 SCRATCH = "/home/edwa0468/scratch_1018/tmp"
