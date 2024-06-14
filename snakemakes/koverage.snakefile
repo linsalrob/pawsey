@@ -2,43 +2,42 @@
 
 import os
 import sys
+import itertools
 
 
-usage=f"{sys.arg[0] <assembly.fasta> <fastq directory>}"
 
-ASSEMBLY=sys.arg[1]
-READDIR=sys.arg[2]
-OUTPUT='koverage'
+fasta = ["Bc01", "Bc02", "Bc03", "Bc05", "Bc06", "Bc07", "Bc08", "Bc09", "Bc10", "Bc11", "Bc13", "Bc14", "Bc15", "Bc16"]
+ena = ["ERP024424", "ERP104038", "ERP104039", "ERP104041", "ERP104076", "ERP104174", "ERP104197", "ERP104200", "ERP104201", "ERP104202", "ERP104204", "ERP104205", "ERP104206", "ERP104207", "ERP104208", "ERP104237", "ERP105558", "ERP105879", "ERP125908", "ERP127759", "ERP128046", "ERP129176"]
 
-if not os.path.exists(ASSEMBLY):
-    print(f"{ASSEMBLY} does not exist.\n{usage}", file=sys.stderr)
-    sys.exit(1)
-
-if not os.path.exists(READDIR):
-    print(f"{READDIR} does not exist.\n{usage}", file=sys.stderr)
-    sys.exit(1)
+DATA = {}
+for c in itertools.product(fasta, ena):
+    ASSEMBLY=f"fasta/{c[0]}.fasta"
+    READDIR=f"ena/{c[1]}/fastq"
+    OUTPUT=f"{c[0]}_{c[1]}"
+    DATA[OUTPUT] = (ASSEMBLY, READDIR)
 
 
 
 rule all:
     input:
-        OUTPUT
+        expand("{faf}_{ebi}", faf=fasta, ebi=ena)
 
 rule koverage:
     input:
-		ass=ASSEMBLY,
-        reads=READDIR
+        ass = lambda wildcards: f"fasta/{wildcards.faf}.fasta",
+        reads = lambda wildcards: f"ena/{wildcards.ebi}/fastq"
     output:
-        directory(OUTPUT)
+        odir = directory("_".join(["{faf}", "{ebi}"]))
     conda: "koverage.yaml"
     resources:
         mem_mb=32000,
         cpus=12
-    params: 
-        odir = OUTPUT
     shell:
         """
-        mkdir -p {params.odir};
-        koverage run --reads {input.reads} --ref {input.ass}
+        mkdir -p {output.odir};
+        export ASSEMBLY={input.ass};
+        export READS={input.reads};
+        koverage run --reads {input.reads} --ref {input.ass} --output {output.odir} \
+                --threads {resources.cpus} 
         """
 
