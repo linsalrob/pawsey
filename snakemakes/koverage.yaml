@@ -1,0 +1,6 @@
+name: koverage
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - koverage
