@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=MGNify_upload
 #SBATCH --account=pawsey1018
-#SBATCH --time=0-6
+#SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=32G
