@@ -38,6 +38,12 @@ If you want to see what's on the image or check things out, you can also run it 
 docker run -i -t linsalrob/reneo:v0.4.0_97d337cca3db /bin/bash
 ```
 
+Run the image with the license and everything 
+
+```
+docker run --volume=$PWD/data/reneo:/reneo --volume=$PWD/gurobi.lic:/opt/gurobi/gurobi.lic:ro linsalrob/reneo:v0.4.0_667759a3e347 reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 2
+```
+
 Now that we have an image we think works, we switch over to our singularity host (e.g. pawsey), and make
 the image:
 
@@ -49,7 +55,7 @@ module load singularity/4.1.0-slurm
 mkdir sif tmp
 # remember that singularity needs the full path (not a relative path, like tmp)
 export SINGULARITY_TMPDIR=$PWD/tmp/
-singularity pull --dir sif linsalrob/reneo:v0.4.0_97d337cca3db
+singularity pull --dir sif linsalrob/reneo:v0.4.0_edb2e466f3e9
 ```
 
 Now, you need to link the directories so that everything will work.
@@ -72,5 +78,5 @@ Then this should work in a slurm job (see reneo.slurm)
 module load singularity/4.1.0-slurm
 
 singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,/home/edwa0468/Projects/reneo/reneo:/reneo,/home/edwa0468/gurobi.lic:/opt/gurobi/gurobi.lic \ 
-	sif/reneo_v0.4.0_eace67412ece.sif reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 32 
+	sif/reneo_v0.4.0_edb2e466f3e9.sif reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 32 
 ```

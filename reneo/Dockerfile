@@ -4,8 +4,8 @@ FROM gurobi/optimizer:latest
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    curl \
-    bzip2 \
+    curl build-essential wget doxygen gnupg gnupg2 apt-transport-https software-properties-common \
+    bzip2 git vim gfortran libtool python3-venv ninja-build python3-pip libnuma-dev python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install micromamba
@@ -18,7 +18,7 @@ ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
 
 
 ARG RENEO_VERSION=0.4.0
-RUN micromamba install -n base -y -c conda-forge -c anaconda -c bioconda -c defaults reneo=${RENEO_VERSION} ;
+RUN micromamba install -n base -y -c conda-forge -c anaconda -c bioconda -c defaults reneo=${RENEO_VERSION} python ;
 
 RUN micromamba clean --all --yes
 RUN mkdir -p /reneo /opt/gurobi
