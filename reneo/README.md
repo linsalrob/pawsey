@@ -27,21 +27,21 @@ because that makes it unique, and often I have to build a few times to get it to
 ```
 # tag it and upload to docker quay
 docker login -u linsalrob
-docker tag reneo linsalrob/reneo:v0.4.0_4dcf358
-docker push linsalrob/reneo:v0.4.0_4dcf358
+docker tag reneo linsalrob/reneo:v0.4.0_387f995e969d
+docker push linsalrob/reneo:v0.4.0_387f995e969d
 ```
 
 If you want to see what's on the image or check things out, you can also run it locally before sharing it
 
 ```
 # run the image to see what's there
-docker run -i -t linsalrob/reneo:v0.4.0_97d337cca3db /bin/bash
+docker run -i -t linsalrob/reneo:v0.4.0_387f995e969d /bin/bash
 ```
 
 Run the image with the license and everything 
 
 ```
-docker run --volume=$PWD/data/reneo:/reneo --volume=$PWD/gurobi.lic:/opt/gurobi/gurobi.lic:ro linsalrob/reneo:v0.4.0_667759a3e347 reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 2
+docker run --volume=$PWD/data/reneo:/reneo --volume=$PWD/gurobi.lic:/opt/gurobi/gurobi.lic:ro linsalrob/reneo:v0.4.0_387f995e969d reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 2
 ```
 
 Now that we have an image we think works, we switch over to our singularity host (e.g. pawsey), and make
@@ -55,7 +55,7 @@ module load singularity/4.1.0-slurm
 mkdir sif tmp
 # remember that singularity needs the full path (not a relative path, like tmp)
 export SINGULARITY_TMPDIR=$PWD/tmp/
-singularity pull --dir sif linsalrob/reneo:v0.4.0_edb2e466f3e9
+singularity pull --dir sif docker://linsalrob/reneo:v0.4.0_387f995e969d
 ```
 
 Now, you need to link the directories so that everything will work.
@@ -78,5 +78,21 @@ Then this should work in a slurm job (see reneo.slurm)
 module load singularity/4.1.0-slurm
 
 singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,/home/edwa0468/Projects/reneo/reneo:/reneo,/home/edwa0468/gurobi.lic:/opt/gurobi/gurobi.lic \ 
-	sif/reneo_v0.4.0_edb2e466f3e9.sif reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 32 
+	sif/reneo_v0.4.0_387f995e969d.sif reneo run --input /reneo/assemblyGraph.gfa --reads /reneo/reads  --output /reneo/reneo_out --threads 32 
 ```
+
+**NOTE:**: If you get an error:
+
+```
+ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+```
+
+This is your local conda installation, _not_ the singularity file. Activate your conda environment (see the error file for which conda environment it is) and then
+install an earlier version of numpy:
+
+```
+python -m pip  install numpy==1.26.4
+```
+
+
+
