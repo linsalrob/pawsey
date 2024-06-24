@@ -14,6 +14,8 @@ conda activate /home/edwa0468/scratch_1018/software/miniconda3/hecatomb
 
 READDIR=$(head -n $SLURM_ARRAY_TASK_ID directories.txt | tail -n 1)
 
+echo "Working in $READDIR"
+echo "Working in: $READDIR" >&2;
 cd $READDIR
 hecatomb run --reads fastq --profile pawsey
 
