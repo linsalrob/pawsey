@@ -1,0 +1,24 @@
+# If you have been using docker recently, you might want to do a complete nuke
+# of the docker directory and start again. This is the easy way
+# and also updates docker!
+
+
+apt remove docker.io
+rm -rf /var/lib/docker
+apt install -y docker.io
+
+# remove any existing docker images
+docker images
+docker images | awk '{print $3}' | grep -v IM | xargs docker rmi -f {}
+# build a new image
+docker build -t hecatomb . > build.out 2> build.err
+
+# tag it and upload to docker quay
+docker login -u linsalrob
+docker tag reneo linsalrob/hecatomb:v1.3.2_     ## ADD THE BUILD MD5SUM here
+docker push linsalrob/hecatomb:v1.3.2_ 
+
+# run the image to see what's there
+docker run -i -t linsalrob/hecatomb:v1.3.2_  /bin/bash
+
+
