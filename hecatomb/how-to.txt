@@ -15,10 +15,12 @@ docker build -t hecatomb . > build.out 2> build.err
 
 # tag it and upload to docker quay
 docker login -u linsalrob
-docker tag reneo linsalrob/hecatomb:v1.3.2_     ## ADD THE BUILD MD5SUM here
-docker push linsalrob/hecatomb:v1.3.2_ 
+TAG=37c06e3a9f8a     ## ADD THE BUILD MD5SUM here
+docker tag hecatomb linsalrob/hecatomb:v1.3.2_${TAG}
+
+docker push linsalrob/hecatomb:v1.3.2_${TAG}
 
 # run the image to see what's there
-docker run -i -t linsalrob/hecatomb:v1.3.2_  /bin/bash
+docker run -i -t linsalrob/hecatomb:v1.3.2_${TAG}  /bin/bash
 
 
