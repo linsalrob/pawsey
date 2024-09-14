@@ -6,6 +6,16 @@ The current tag is d95c4fb1ae57
 
 # Load the singularity module and create a new image
 
+
+NOTE: There is (currently) an issue with singularity 4.1.0. If it persists, here is how to load a previous image:
+
+```
+module load pawseyenv/2023.08
+module load singularity/3.11.4-slurm
+```
+
+Otherwise, this will make a focus `.sif`
+
 ```
 export TAG=d95c4fb1ae57
 module load singularity/4.1.0-slurm
