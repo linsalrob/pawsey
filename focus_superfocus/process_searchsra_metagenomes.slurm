@@ -31,10 +31,10 @@ WD=$PWD
 for SRA in DRR ERR SRR; do 
 	mkdir -p $SRA
 	cd $SRA
-	for EPROJ in $(rclone lsd A18:searchsra/fasta/20201013/DRR | awk '{print $NF}'); do
+	for EPROJ in $(rclone lsd A18:searchsra/fasta/20201013/$SRA | awk '{print $NF}'); do
 		if [ ! -e ${EPROJ} ]; then
 			mkdir -p $EPROJ/fasta
-			rclone copy A18:searchsra/fasta/20201013/DRR/$EPROJ $EPROJ/fasta
+			rclone copy A18:searchsra/fasta/20201013/$SRA/$EPROJ $EPROJ/fasta
 			find $EPROJ/fasta -type f -exec gunzip {} \;
 			
 			echo -e "\tRunning focus"
