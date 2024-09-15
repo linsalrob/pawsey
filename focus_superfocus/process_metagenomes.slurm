@@ -10,35 +10,31 @@
 
 set -euo pipefail
 
+if [[ $# -eq 0 ]]; then 
+	echo "$0 <directory of sequence files>" >&2; 
+	exit 1
+fi
+
+
 WD=$PWD
 
 module load pawseyenv/2023.08
 module load singularity/3.11.4-slurm
 
-eval "$(conda shell.bash hook)"
-conda activate rclone
+DIR=$1
 
-for EPROJ in $(rclone lsd PhablesMGNify:General/data/fastq/ | awk '{print $NF}'); do
-	for EANAL in $(rclone lsd PhablesMGNify:General/data/fastq/$EPROJ | awk '{print $NF}'); do
-		echo "Analysing $EPROJ : $EANAL";
+#for FQ in $(find $EPROJ/fasta -type f); do fastq2fasta $FQ ${FQ/fastq.gz/fasta} && rm -f $FQ; done
 
-		mkdir fasta
-		rclone copy PhablesMGNify:General/data/fastq/$EPROJ/$EANAL/ fasta
-		for FQ in $(find fasta -type f); do fastq2fasta $FQ ${FQ/fastq.gz/fasta} && rm -f $FQ; done
-		
-		echo -e "\tRunning focus"
-		singularity exec --bind $PWD:/focus /home/edwa0468/Projects/focus/sif/focus_v1.8.0_d95c4fb1ae57.sif \
-			focus -q /focus/fasta -o /focus/${EANAL}_focus -k 7 -t 16 -p $EANAL
+echo -e "\tRunning focus"
+singularity exec --bind $PWD:/focus /home/edwa0468/Projects/focus/sif/focus_v1.8.0_d95c4fb1ae57.sif \
+	focus -q /focus/$DIR -o /focus/focus -k 7 -t 16 
 
-		find ${EANAL}_focus -type f -exec gzip {} \;
+find focus -type f -exec gzip {} \;
 
-		echo -e "\tRunning superfocus"
-		singularity exec --bind $PWD/:/superfocus,/home/edwa0468/Projects/superfocus_db:/superfocus_db \
-			/home/edwa0468/Projects/superfocus/sif/superfocus_v1.6.0_5abbef95a6ca.sif \
-			superfocus", "-q /superfocus/fasta -t 16 -dir /superfocus/${EANAL}_superfocus -a mmseqs2 -db DB_95 -b /superfocus_db -d -o $EANAL
+echo -e "\tRunning superfocus"
+singularity exec --bind $PWD/:/superfocus,/home/edwa0468/Projects/superfocus_db:/superfocus_db \
+	/home/edwa0468/Projects/superfocus/sif/superfocus_v1.6.0_5abbef95a6ca.sif \
+	superfocus -q /superfocus/$DIR -t 16 -dir /superfocus/superfocus -a mmseqs2 -db DB_95 -b /superfocus_db -d
 
-		find ${EANAL}_superfocus  -type f -exec gzip {} \;
-		rm -rf fasta 
-	done
-done
+find superfocus  -type f -exec gzip {} \;
 
