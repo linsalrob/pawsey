@@ -8,6 +8,20 @@ make a file of `run_ids.txt` and then `sbatch --array=1-$(wc -l run_ids.txt | aw
 
 # Step 2. Run focus and superfocus on those
 
+You need to build the [focus](../focus/) and [superfocus](../superfocus) `.sif` images. See those directories for instructions on how to do that. You also need the superfocus mmseqs2 DB_95 data.
+
+This runs focus and superfocus on the fasta directory
+```
+sbatch process_metagenomes.slurm fasta
+```
+
+## Step 2b. Teams data
+
+We also have some data in teams, and this will run focus and superfocus on that data:
+
+```
+process_teams_metagenomes.slurm
+```
 
 
 
