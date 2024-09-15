@@ -2,7 +2,6 @@
 #SBATCH --job-name=ena_dld
 #SBATCH --account=pawsey1018
 #SBATCH --time=1-0
-#SBATCH --partition=copy
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32G
@@ -18,4 +17,6 @@ OUTDIR="ena/$BIOP/fastq"
 mkdir --parents $OUTDIR
 python ~/GitHubs/pawsey/mgnify_phables/bioproject_to_fastq.py -p $BIOP -d $OUTDIR -v
 
-
+##
+## I remove this: #SBATCH --partition=copy
+## 

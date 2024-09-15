@@ -33,7 +33,7 @@ find focus -type f -exec gzip {} \;
 
 echo -e "\tRunning superfocus"
 singularity exec --bind $PWD/:/superfocus,/home/edwa0468/Projects/superfocus_db:/superfocus_db \
-	/home/edwa0468/Projects/superfocus/sif/superfocus_v1.6.0_5abbef95a6ca.sif \
+	 /home/edwa0468/Projects/superfocus/sif/superfocus_v1.6.0_b91c0c41d6a5.sif \
 	superfocus -q /superfocus/$DIR -t 16 -dir /superfocus/superfocus -a mmseqs2 -db DB_95 -b /superfocus_db -d
 
 find superfocus  -type f -exec gzip {} \;

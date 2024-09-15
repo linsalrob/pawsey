@@ -14,6 +14,7 @@ set -euo pipefail
 module load pawseyenv/2023.08
 
 module load singularity/3.11.4-slurm
-singularity exec --bind $PWD/:/focus sif/focus_v1.8.0_d95c4fb1ae57.sif \
+singularity exec --bind $PWD/:/focus \
+	/home/edwa0468/Projects/focus/sif/focus_v1.8.0_d95c4fb1ae57.sif \
 	focus -q /focus/fasta -o /focus/focus -k 7 -t 16
 
