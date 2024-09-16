@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=metaf_sf
+#SBATCH --job-name=tms_metaf_sf
 #SBATCH --account=pawsey1018
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
-#SBATCH -o metaf_sf-%j.out
-#SBATCH -e metaf_sf-%j.err
+#SBATCH -o tms_metaf_sf-%j.out
+#SBATCH -e tms_metaf_sf-%j.err
 
 set -euo pipefail
 

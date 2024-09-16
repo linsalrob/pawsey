@@ -71,18 +71,20 @@ fi
 
 # If we already have the GFA file in the WD then assume something went wrong with the phables run. Skip the downloads!
 #
-if [[ ! -e $WD/$GFAID.gfa ]]; then
-	# step 1, get the fastq files
 
+if [[ ! -e $WD/fastq ]]; then
+	# step 1, get the fastq files
 	mkdir -p $WD/fastq $WD/phables
 	python ~/GitHubs/pawsey/mgnify_phables/bioproject_accession_to_fastq_local.py -l ena/$PROJECTID/fastq/ -p $PROJECTID -a $GFAID -d $WD/fastq -v -c
+fi
 
-
+if [[ ! -e $WD/$GFAID.gfa ]]; then
 	# step 2, get the gfa file
 	rclone copy PhablesMGNify:General/data/gfa/$PROJECTID/$GFAID.gfa.gz $WD/
 	gunzip $WD/$GFAID.gfa.gz 
 fi
 
+module load pawseyenv/2023.08
 module load singularity/3.11.4-slurm
 singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,$PWD/$WD:/phables,$HOME/gurobi.lic:/opt/gurobi/gurobi.lic sif/phables_v0.6_gogo.sif \
 	phables run --input /phables/$GFAID.gfa --reads /phables/fastq/ --output /phables/phables --threads 32 --prefix $GFAID --mincov 1
