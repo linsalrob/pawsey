@@ -107,7 +107,7 @@ rule R1_reads_map_to_ref:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt} -G 12 -f 65 {input.bam} > {output}"
+        "samtools {outfmt} -F 3588 -G 12 -f 65 {input.bam} | gzip -c > {output}"
 
 rule R2_reads_map_to_ref:
     input:
@@ -118,7 +118,7 @@ rule R2_reads_map_to_ref:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt}  -G 12 -f 129 {input.bam} > {output}"
+        "samtools {outfmt} -F 3588 -G 12 -f 129 {input.bam} | gzip -c > {output}"
 
 rule single_reads_map_to_ref:
     input:
@@ -129,7 +129,7 @@ rule single_reads_map_to_ref:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt}  -F 5 {input.bam} > {output}"
+        "samtools {outfmt}  -F 5 {input.bam} | gzip -c > {output}"
 
 rule R1_unmapped:
     input:
@@ -140,7 +140,7 @@ rule R1_unmapped:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt}  -f 77  {input.bam} > {output}"
+        "samtools {outfmt} -F 3584 -f 77  {input.bam} | gzip -c > {output}"
 
 rule R2_unmapped:
     input:
@@ -151,7 +151,7 @@ rule R2_unmapped:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt}  -f 141 {input.bam} > {output}"
+        "samtools {outfmt} -F 3584 -f 141 {input.bam} | gzip -c > {output}"
 
 rule single_reads_unmapped:
     input:
@@ -162,4 +162,4 @@ rule single_reads_unmapped:
     conda:
         "deconseq.yaml"
     shell:
-        "samtools {outfmt}  -f 4 -F 1  {input.bam} > {output}"
+        "samtools {outfmt}  -f 4 -F 1  {input.bam} | gzip -c > {output}"
