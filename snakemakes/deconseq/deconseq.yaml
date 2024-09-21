@@ -1,0 +1,7 @@
+name: deconseq
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - minimap2

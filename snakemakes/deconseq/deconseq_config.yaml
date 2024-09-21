@@ -1,0 +1,20 @@
+
+# set this to the directory that has the fastq files
+readdir: "fastq"
+
+# set this to the path to the indexed host genome
+# that you want to filter out. This should be indexed
+# with `bowtie2-build`, and should be just the base 
+# filename of the .1.bt2, .2.bt2, .3.bt2 indexes etc.
+hostfile: "/path/to/human"   
+
+# set this to the host name that we will use in the output names
+hostname: "human"
+
+# set this to the location where you would like the results
+# written. We will make the directory if it doesn't exist
+outdir: "host_mapped"
+
+# Set this to fasta to output fasta files or fastq to output
+# fastq files
+outfmt: "fasta"
