@@ -11,4 +11,7 @@
 
 SRR=$(head -n $SLURM_ARRAY_TASK_ID run_ids.txt | tail -n 1)
 
+# if you don't have the sra toolkit you can download the latest url from
+# https://github.com/ncbi/sra-tools/wiki/01.-Downloading-SRA-Toolkit # sratoolkit 
+
 /home/edwa0468/Projects/laura/more_data/sratoolkit.3.1.1-ubuntu64/bin/fasterq-dump --split-3 $SRR --outdir fasta --fasta-unsorted
