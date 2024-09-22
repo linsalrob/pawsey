@@ -59,12 +59,12 @@ PATTERN_R2 = '{sample}_R2'
 rule all:
     input:
         expand([
-            os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.mapped.' + outfmt),
-            os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.mapped.' + outfmt),
-            os.path.join(outdir, '{sample}_singletons_' + hostname + '.mapped.' + outfmt),
-            os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.unmapped.' + outfmt),
-            os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.unmapped.' + outfmt),
-            os.path.join(outdir, '{sample}_singletons_' + hostname + '.unmapped.' + outfmt)
+            os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.mapped.' + outfmt + ".gz"),
+            os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.mapped.' + outfmt + ".gz"),
+            os.path.join(outdir, '{sample}_singletons_' + hostname + '.mapped.' + outfmt + ".gz"),
+            os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.unmapped.' + outfmt + ".gz"),
+            os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.unmapped.' + outfmt + ".gz"),
+            os.path.join(outdir, '{sample}_singletons_' + hostname + '.unmapped.' + outfmt + ".gz")
         ], sample=SAMPLES)
     
 
@@ -103,7 +103,7 @@ rule R1_reads_map_to_ref:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.mapped.' + outfmt)
+        os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.mapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
@@ -114,7 +114,7 @@ rule R2_reads_map_to_ref:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.mapped.' + outfmt)
+        os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.mapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
@@ -125,7 +125,7 @@ rule single_reads_map_to_ref:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, '{sample}_singletons_' + hostname + '.mapped.' + outfmt)
+        os.path.join(outdir, '{sample}_singletons_' + hostname + '.mapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
@@ -136,7 +136,7 @@ rule R1_unmapped:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.unmapped.' + outfmt)
+        os.path.join(outdir, PATTERN_R1 + "_" + hostname + '.unmapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
@@ -147,7 +147,7 @@ rule R2_unmapped:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.unmapped.' + outfmt)
+        os.path.join(outdir, PATTERN_R2 + "_" + hostname + '.unmapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
@@ -158,7 +158,7 @@ rule single_reads_unmapped:
         bam = os.path.join(outdir, '{sample}.' + hostname + '.bam'),
         bai = os.path.join(outdir, '{sample}.' + hostname + '.bam.bai')
     output:
-        os.path.join(outdir, '{sample}_singletons_' + hostname + '.unmapped.' + outfmt)
+        os.path.join(outdir, '{sample}_singletons_' + hostname + '.unmapped.' + outfmt + ".gz")
     conda:
         "deconseq.yaml"
     shell:
