@@ -18,6 +18,19 @@ and then set your package directory to be on `/scratch/`
 conda config --add pkgs_dirs /scratch/$PAWSEY_PROJECT/$USER/miniconda3/pkg_dir
 ```
 
+## Create a temporary conda installation. 
+
+This will get deleted after (at most) 30 days, but is good if you want to install 
+something to test. 
+
+
+```
+TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
+mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  python=3.12
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+```
+
+
 # Partitions
 
 work partition (316 nodes, 128 cores per node)
