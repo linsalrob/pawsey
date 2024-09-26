@@ -12,5 +12,5 @@ set -euo pipefail
 eval "$(conda shell.bash hook)"
 conda activate snakemake7
 
-snakemake -s sra_download.fasta.snakefile --profile pawsey --local-cores 8 --jobs 10
+snakemake -s sra_download.fasta.snakefile --profile pawsey --local-cores 8 --jobs 20
 

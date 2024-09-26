@@ -39,9 +39,10 @@ if not os.path.exists(hostfile):
     sys.exit()
 
 
-SAMPLES,EXTENSIONS = glob_wildcards(os.path.join(readdir, '{sample}_R1{extentions}'))
+R1SAMPLES,R1EXTENSIONS = glob_wildcards(os.path.join(readdir, '{sample}_R1{extentions}'))
+R2SAMPLES,R2EXTENSIONS = glob_wildcards(os.path.join(readdir, '{sample}_R2{extentions}'))
 
-if not EXTENSIONS:
+if not R1EXTENSIONS:
     sys.stderr.write("""
         FATAL: We could not parse the sequence file names.
         We are expecting {sample}_R1{extension}, and so your files
@@ -51,10 +52,16 @@ if not EXTENSIONS:
     sys.exit()
 # we just get the generic extension. This is changed in Step 1
 
-file_extension = EXTENSIONS[0]
+
+file_extension = R1EXTENSIONS[0]
 # a convenience so we don't need to use '{sample}_R1' all the time
 PATTERN_R1 = '{sample}_R1'
 PATTERN_R2 = '{sample}_R2'
+
+
+# make sure that we have R1 and R2 reads
+SAMPLES = list(set(R1SAMPLES).intersection(set(R2SAMPLES)))
+
 
 rule all:
     input:
