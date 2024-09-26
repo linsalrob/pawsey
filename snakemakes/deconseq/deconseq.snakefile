@@ -60,7 +60,7 @@ PATTERN_R2 = '{sample}_R2'
 
 
 # make sure that we have R1 and R2 reads
-SAMPLES = list(set(R1SAMPLES).intersection(set(R2SAMPLES)))
+SAMPLES = [f for f in set(R1SAMPLES).intersection(set(R2SAMPLES)) if not f.startswith('.')]
 
 
 rule all:
