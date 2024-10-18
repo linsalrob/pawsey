@@ -39,22 +39,17 @@ if not os.path.exists(hostfile):
     sys.exit()
 
 
-R1SAMPLES,R1EXTENSIONS = glob_wildcards(os.path.join(readdir, '{sample}.fasta{extentions}'))
+SAMPLES,EXTENSIONS = glob_wildcards(os.path.join(readdir, '{sample}.fasta{extentions}'))
 
-if not R1EXTENSIONS:
+if not EXTENSIONS:
     sys.stderr.write("""
         FATAL: We could not parse the sequence file names.
-        We are expecting {sample}_R1{extension}, and so your files
-        should contain the characters '_R1' in the fwd reads
-        and '_R2' in the rev reads
         """)
     sys.exit()
 # we just get the generic extension. This is changed in Step 1
 
 
-file_extension = R1EXTENSIONS[0]
-# a convenience so we don't need to use '{sample}_R1' all the time
-PATTERN_R1 = '{sample}.fasta'
+file_extension = EXTENSIONS[0]
 
 
 rule all:
@@ -82,7 +77,7 @@ rule minimap:
     shell:
         """
         minimap2 -t {resources.cpus} --split-prefix=tmp$$ -a -xsr {params.host} \
-            {input.r1} {input.r2} | \
+            {input.r1} | \
             samtools view -bh | samtools sort -o {output}
         """
 
