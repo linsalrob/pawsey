@@ -97,3 +97,13 @@ wil clean up some of the conda cache files.
 # squeue_format
 
 By default, things like array jobs don't show up. Set the $SQUEUE_FORMAT env variable to set the columns to show
+
+
+# create a mamba (conda) environment in scratch. Note you probably have to delete this since you've named it!
+mamba env create --file atavide_lite.yaml --prefix /scratch/pawsey1018/edwa0468/software/miniconda3/atavide_lite
+
+Here is the TMP version
+TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
+mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  python=3.12
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+
