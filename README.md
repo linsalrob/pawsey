@@ -107,3 +107,13 @@ TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
 mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  python=3.12
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 
+# rclone
+
+Make sure that you add `--local-no-set-modtime` to any rclone command.
+
+Ordinarily, `rclone` syncs the local timestamp so that it is the same as the remote file. However, if you download a file later, that time stamp will be >30 days old and the file will be deleted. 
+e.g.
+
+```
+rclone copy --local-no-set-modtime A18:fame/CF/JessCarlsonJones/WorldWideCF/fasta/fasta_subsampled fasta_subsampled
+```
