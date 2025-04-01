@@ -79,7 +79,7 @@ TMP=$(mktemp -d -p /scratch/$PAWSEY_PROJECT/$USER/tmp)
 echo "Running mmseqs easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTDIR/$OUTFILE $TMP --threads 32" 2>&1;
 
 
-mmseqs easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTDIR/$OUTFILE $TMP --threads 32
+$MMSEQS easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTDIR/$OUTFILE $TMP --threads 32
 
 echo "Fin " `date` >&2;
 
