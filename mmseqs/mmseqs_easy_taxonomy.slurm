@@ -69,17 +69,17 @@ fi
 OUTDIR=mmseqs
 mkdir -p $OUTDIR
 
-OUTFILE=${R1/.fasta.gz/}
+OUTFILE=$(basename ${R1/.fasta.gz/})
 OUTFILE=${OUTFILE/.fasta/}
 
 OUTPUT=$OUTDIR/$OUTFILE.mmseqs.$DB
 
 TMP=$(mktemp -d -p /scratch/$PAWSEY_PROJECT/$USER/tmp)
 
-echo "Running mmseqs easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTDIR/$OUTFILE $TMP --threads 32" 2>&1;
+echo "Running mmseqs easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTPUT $TMP --threads 32" 2>&1;
 
 
-$MMSEQS easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTDIR/$OUTFILE $TMP --threads 32
+$MMSEQS easy-taxonomy $R1 $R2 $DBSOURCE/$DB $OUTPUT $TMP --threads 32
 
 echo "Fin " `date` >&2;
 
