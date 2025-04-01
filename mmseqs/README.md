@@ -20,4 +20,13 @@ mamba install -y mmseqs2
 
 2. Make a directory and download the databases
 
+This code checks for `mmseqs` but you can also provide the location as an argument.
+
+```
+sbatch download_gtdb.slurm /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP/bin/mmseqs
+```
+
+3. Run the comparison with mmseqs
+
+
 
