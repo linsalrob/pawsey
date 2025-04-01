@@ -26,13 +26,13 @@ else
 fi
 
 
-DESTINATION=/scratch/$PAWSEY_PROJECT/$USER/db
+#DB can also be  UniRef50 UniRef100 GTDB etc
+DB=GTDB
+
+DESTINATION=/scratch/$PAWSEY_PROJECT/$USER/db/$DB
 TMP=/scratch/$PAWSEY_PROJECT/$USER/tmp
 mkdir -p $DESTINATION $TMP
 
-#DB can also be  UniRef50 UniRef100 etc
-
-DB=GTDB
 TPD=$(mktemp -d -p $TMP)
 echo -e "Downloading to $DESTINATION/$DB and using temp location $TPD.\nNote we download the tarball and then uncompress, so there is usually nothing in the output for a while!" >&2
 $MMSEQS databases --threads 8 $DB $DESTINATION/$DB $TPD
