@@ -71,6 +71,7 @@ mkdir -p $OUTDIR
 
 OUTFILE=$(basename ${R1/.fasta.gz/})
 OUTFILE=${OUTFILE/.fasta/}
+OUTFILE=${OUTFILE/R1./}
 
 OUTPUT=$OUTDIR/$OUTFILE.mmseqs.$DB
 
