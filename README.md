@@ -33,6 +33,8 @@ mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 
 # Partitions
 
+More information [Pawsey partitions](https://pawsey.atlassian.net/wiki/spaces/US/pages/51929058/Running+Jobs+on+Setonix)
+
 work partition (316 nodes, 128 cores per node)
 - Default partition, used for regular compute jobs
 - 230 GB available memory per node, which is 1.8 GB per core
