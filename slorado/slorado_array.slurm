@@ -1,11 +1,13 @@
 #!/bin/bash --login
-#SBATCH --partition=gpu-highmem
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=1-0
 #SBATCH -o slorado-%A_%a.out
 #SBATCH -e slorado-%A_%a.err
+
+set -euo pipefail
 
 # usage: sbatch --account=${PAWSEY_PROJECT}-gpu slorado.slurm
 
@@ -16,7 +18,7 @@ if [[ $# -eq 0 ]]; then
 	echo "usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-$JOBS:1 slorado.slurm BLOW5_DIR" >&2;
 fi
 
-$BLOW5DIR=$1
+BLOW5DIR=$1
 BASE=$(dirname $BLOW5DIR)
 FASTQDIR=$BASE/fastq_arr
 mkdir -p $FASTQDIR
@@ -37,5 +39,5 @@ BLOW5=${INPUTS[$SLURM_ARRAY_TASK_ID]}
 
 FASTQ=${BLOW5/blow5/fastq}
 
-echo -e "$BLOW5 -> $FASTQ"
+echo -e "Running ${BLOW5DIR}/${BLOW5} -> ${FASTQDIR}/${FASTQ}"
 srun /usr/bin/time -v ${SLORADO} basecaller ${SLORADO_DIR}/models/${MODEL} ${BLOW5DIR}/${BLOW5} -o ${FASTQDIR}/${FASTQ} -t64 -C ${BATCH_SIZE}
