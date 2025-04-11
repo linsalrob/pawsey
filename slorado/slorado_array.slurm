@@ -15,7 +15,7 @@ set -euo pipefail
 # BASE=/scratch/$PAWSEY_PROJECT/$USER/CF/Promethion/CF_PromethION_matched_samples/CF_PromethION_matched_samples_Run1/20250314_1541_P2S-02700-A_PBA71209_87693662/
 
 if [[ $# -eq 0 ]]; then
-	echo "usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-$JOBS:1 slorado.slurm BLOW5_DIR" >&2;
+	echo "usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-JOBS:1 slorado.slurm BLOW5_DIR" >&2;
 fi
 
 BLOW5DIR=$1
