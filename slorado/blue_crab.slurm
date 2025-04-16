@@ -11,6 +11,6 @@ set -euo pipefail
 
 source /scratch/$PAWSEY_PROJECT/$USER/slorado/blue-crab-venv/bin/activate
 
-BASE=/scratch/$PAWSEY_PROJECT/$USER/CF_PromethION_matched_samples_Run2/20250314_1541_P2S-02700-B_PBA71146_20fca30d
+BASE=.
 
 blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
