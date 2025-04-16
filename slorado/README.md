@@ -61,5 +61,21 @@ BASE=/home/edwa0468/scratch_1018/CF/Promethion/CF_PromethION_matched_samples/CF_
 blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
 ```
 
+## Slow5Stats
+
+I recommend, at this point, running [slow5tools stats](https://github.com/hasindu2008/slow5tools) on all the `blow5` files. This will tell you (a) if the files converted OK, and (b) how many reads there are per file. Then, when slorado is done, it is easy to cross check the number of sequences in the fastq file and blow5 files.
 
 ## Run slorado
+
+### Install slorado
+
+```
+VERSION=v0.3.0-beta
+GPU=rocm
+wget "https://github.com/BonsonW/slorado/releases/download/$VERSION/slorado-$VERSION-x86_64-$GPU-linux-binaries.tar.xz"
+tar xvf slorado-$VERSION-x86_64-$GPU-linux-binaries.tar.xz
+```
+
+Then run it using the `slorado.slurm` script.
+
+Note, when I was converting ~100 files the `gpu-dev` could do about 1/2 at time before maxing out (time limit is 4 hours), so I just ran it twice on the `gpu-dev` queue. The regular GPU queue was taking about 3 days to get a job started.
