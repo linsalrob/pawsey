@@ -22,6 +22,6 @@ module load singularity/4.1.0-slurm
 # singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get -r $1 -m ena-ftp
 
 # for an entire bioproject
-singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get --run-identifiers-list $1 -m ena-ftp -m aws-http -m prefetch -m aws-cp --download-threads 16
+singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get --run-identifiers-list $1 -m ena-ftp aws-http prefetch aws-cp --download-threads 16
 
 
