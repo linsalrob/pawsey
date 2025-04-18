@@ -11,7 +11,7 @@
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-	echo "kingfisher.slurm <PROJECT ID> (e.g. SRR123456 or PRJNA516870)"
+	echo "kingfisher.slurm <RUn ID> (e.g. SRR123456)"
 	exit; 
 fi
 
@@ -19,9 +19,9 @@ module load singularity/4.1.0-slurm
 
 
 # For a single run or multiple runs
-# singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get -r $1 -m ena-ftp
+singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get -r $1 -m ena-ftp --download-threads 16
 
 # for an entire bioproject
-singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get -p $1 -m ena-ftp --download-threads 16
+# singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/kingfisher/sif/kingfisher_0.4.1.sif get -p $1 -m ena-ftp -m aws-http -m prefetch -m aws-cp --download-threads 16
 
 
