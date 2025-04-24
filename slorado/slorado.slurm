@@ -7,11 +7,11 @@
 #SBATCH -o slorado-%j.out
 #SBATCH -e slorado-%j.err
 
-# usage: sbatch --account=${PAWSEY_PROJECT}-gpu slorado.slurm
+# usage: sbatch --account=${PAWSEY_PROJECT}-gpu ~/GitHubs/pawsey/slorado/slorado.slurm
 
 BASE=.
 BLOW5DIR=$BASE/blow5
-FASTQDIR=$BASE/fastq_8
+FASTQDIR=$BASE/fastq
 mkdir -p $FASTQDIR
 
 # you may change the model one of the available:  dna_r10.4.1_e8.2_400bps_fast@v4.2.0  dna_r10.4.1_e8.2_400bps_hac@v4.2.0  dna_r10.4.1_e8.2_400bps_sup@v4.2.0
