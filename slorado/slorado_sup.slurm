@@ -18,7 +18,7 @@ mkdir -p $FASTQDIR
 # MODEL=dna_r10.4.1_e8.2_400bps_sup@v4.2.0
 MODEL=dna_r10.4.1_e8.2_400bps_sup@v4.2.0
 # batch size must be adjusted so that we do not overflow the GPU memory: tested to work:  2000 for fast, 500 for hac and 200 for sup
-BATCH_SIZE=500
+BATCH_SIZE=200
 
 # where did you install slorado
 SLORADO_DIR=/scratch/$PAWSEY_PROJECT/$USER/slorado/slorado-v0.3.0-beta
