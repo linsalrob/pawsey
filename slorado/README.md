@@ -80,3 +80,33 @@ tar xvf slorado-$VERSION-x86_64-$GPU-linux-binaries.tar.xz
 Then run it using the `slorado.slurm` script.
 
 Note, when I was converting ~100 files the `gpu-dev` could do about 1/2 at time before maxing out (time limit is 4 hours), so I just ran it twice on the `gpu-dev` queue. The regular GPU queue was taking about 3 days to get a job started.
+
+
+## Demultiplexing
+
+If you have used barcodes, there are a couple of ways that you can separate the fastq files into separate files. The cutadapt.slurm script uses [cutadapt](https://cutadapt.readthedocs.io/en/stable/) to split the fastq files. This needs the barcodes as a fasta file.
+
+If you are going to use this, make a temporary conda installation with cutadapt:
+
+```
+TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
+mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  cutadapt
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+echo -e "Add this line at the start of cutadapt.slurm:\nTMP=$TMP"
+```
+
+Make sure you change the value of TMP in the `cutadapt.slurm` file.
+
+Once you have created the output files, you will get a _lot_ of separate barcode files. Here is one way to join them into unique barcode files:
+
+```
+mkdir split_barcodes
+for i in $(seq 1 9); do cat demuxed_reads/*_RB0$i.fastq >> split_barcodes/RB0$i.fastq; done
+for i in $(seq 10 96); do cat demuxed_reads/*_RB$i.fastq >> split_barcodes/RB$i.fastq; done
+```
+
+
+For [dorado](https://github.com/nanoporetech/dorado), start by getting the appropriate binary from the [Installation section](https://github.com/nanoporetech/dorado?tab=readme-ov-file#installation).
+
+
+
