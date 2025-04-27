@@ -21,6 +21,8 @@ phables/$SRR/fastq/$SRR_2.fastq.gz
 
 Then this should work in a slurm job (see phables.slurm)
 
+Note: on pawsey you may need to go back to singularity version 3.11.4. To do so, use `module load pawseyenv/2023.08`
+
 ```
 module load singularity/3.11.4-slurm
 singularity exec --bind /scratch/pawsey1018/edwa0468/tmp/conda:/conda,$PWD/phables/$SRR:/phables,$HOME/gurobi.lic:/opt/gurobi/gurobi.lic sif/phables_v0.6_gogo.sif \
