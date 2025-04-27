@@ -108,5 +108,24 @@ for i in $(seq 10 96); do cat demuxed_reads/*_RB$i.fastq >> split_barcodes/RB$i.
 
 For [dorado](https://github.com/nanoporetech/dorado), start by getting the appropriate binary from the [Installation section](https://github.com/nanoporetech/dorado?tab=readme-ov-file#installation).
 
+`Dorado` needs the name of the barcoding kit. Top Top: the name probably replaces a period for an underscore, just to be annoying. e.g. The ONT product `SQK-RBK114.24` is called `SQK-RBK114-24`. You can find a list of all possible kits using the help.
+
+```
+dorado demux --help
+```
+
+### Comparison data set
+
+In this data set we only used barcodes 1-13. Cutadapt was given all 96 possible barcodes, while dorado was only given barcodes 1-24, so the comparison is not fair, but you can see that lots of the unassigned reads are potentially off-by-one errors for other barcodes
+
+selection | catadapt | dorado | catadapt_sup | dorado_sup
+--- | --- | --- | --- | ---
+barcodes 1-13 | 1516136 | 1355273 | 1563055 | 1314039
+barcodes 14-24 | 22755 | 69 | 17146 | 67
+barcodes 24-96 | 286768 | 4 | 258312 | 3
+Unclassified | 187739 | 657493 | 175238 | 698729
+Total Reads | 2012835 | 2012835 | 2012835 | 2012835
+Percent assigned | 75.32 | 67.33 | 77.65 | 65.28
+
 
 
