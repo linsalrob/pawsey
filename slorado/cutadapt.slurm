@@ -29,6 +29,7 @@ for fq in "${FASTQ_DIR}"/*.fastq; do
     echo "Processing ${base}.fastq ..."
     
     cutadapt \
+      -j 0 \
       -e 0.1 \
       --action=trim \
       --front file:${BARCODES} \
