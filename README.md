@@ -119,3 +119,18 @@ e.g.
 ```
 rclone copy --local-no-set-modtime A18:fame/CF/JessCarlsonJones/WorldWideCF/fasta/fasta_subsampled fasta_subsampled
 ```
+
+# installing node and nvm
+
+I currently have these installed on `/scratch` with a symlink from `$HOME/.nvm` to the directory on `/scratch`, so they sometimes disappear!
+
+Delete and redownload nvm:
+
+```
+cd ~/.nvm
+rm -rf alias versions test
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc
+nvm install node
+```
+
