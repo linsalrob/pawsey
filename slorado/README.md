@@ -114,6 +114,13 @@ For [dorado](https://github.com/nanoporetech/dorado), start by getting the appro
 dorado demux --help
 ```
 
+## f5c for aligning squiggles
+
+```
+VERSION=v1.5
+wget "https://github.com/hasindu2008/f5c/releases/download/$VERSION/f5c-$VERSION-binaries.tar.gz" && tar xvf f5c-$VERSION-binaries.tar.gz && cd f5c-$VERSION/
+```
+
 ### Comparison data set
 
 In this data set we only used barcodes 1-13. Cutadapt was given all 96 possible barcodes, while dorado was only given barcodes 1-24, so the comparison is not fair, but you can see that lots of the unassigned reads are potentially off-by-one errors for other barcodes
