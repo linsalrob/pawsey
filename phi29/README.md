@@ -46,3 +46,8 @@ Because of the complexity in signal data, initial visualisation would need a num
 9. From the m8 format blast output, create a list of read IDs.
 10. Use slow5tools to extract the reads from the BLOW5 file using the read IDs and create a new BLOW5 file, one for each interesting region and one for each barcode
 
+
+
+# Installing software
+
+Most of the tools are installed with conda, except for the slorado/dorado/slow5tools/f5c. See the [slorado readme](../slorado/README.md) for installation details.
