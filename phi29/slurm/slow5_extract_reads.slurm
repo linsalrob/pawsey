@@ -1,6 +1,7 @@
 #!/bin/bash --login
 #SBATCH --account=pawsey1018
 #SBATCH --nodes=1
+#SBATCH --mem=64G
 #SBATCH --ntasks=1
 #SBATCH --time=0-4
 #SBATCH -o slow5extract-%j.out
