@@ -2,7 +2,7 @@
 #SBATCH --job-name=minimap
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=64GB
 #SBATCH -o minimap-%j.out
 #SBATCH -e minimap-%j.err
