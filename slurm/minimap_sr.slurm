@@ -9,7 +9,7 @@
 
 set -euo pipefail
 eval "$(conda shell.bash hook)"
-conda activate bioinformatics
+conda activate minimap 
 
 if [[ $# -ne 4 ]]; then echo "$0  <reference> <R1> <R2> <output>"; exit; fi
 

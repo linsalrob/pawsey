@@ -30,8 +30,14 @@ mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 ```
 
+Alternatively, make a TMP miniconda:
+```
+mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/megahit  'python>=3.12'
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/megahit
+```
 
 # Partitions
+
 
 More information [Pawsey partitions](https://pawsey.atlassian.net/wiki/spaces/US/pages/51929058/Running+Jobs+on+Setonix)
 
