@@ -1,6 +1,7 @@
 # Load the singularity module and create a new image
 
 ```
+module load pawseyenv/2023.08
 module load singularity/3.11.4-slurm
 mkdir sif
 singularity pull --dir sif docker://linsalrob/phables:v0.6_gogo
