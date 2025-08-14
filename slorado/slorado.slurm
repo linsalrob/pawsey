@@ -24,6 +24,10 @@ BATCH_SIZE=500
 SLORADO_DIR=/scratch/$PAWSEY_PROJECT/$USER/slorado/slorado-v0.3.0-beta
 SLORADO=${SLORADO_DIR}/bin/slorado
 
+if [[ ! -e ${SLORADO} ]]; then
+	echo "Slorado not found at ${SLORADO}. Please install it first."
+	exit 1
+fi
 
 for BLOW5 in $(find $BLOW5DIR -type f -printf "%f\n"); do
 	FASTQ=${BLOW5/blow5/fastq}; 
@@ -32,5 +36,6 @@ for BLOW5 in $(find $BLOW5DIR -type f -printf "%f\n"); do
 		continue
 	fi
 	echo -e "$BLOW5 -> $FASTQ"
-	srun /usr/bin/time -v ${SLORADO} basecaller ${SLORADO_DIR}/models/${MODEL} ${BLOW5DIR}/${BLOW5} -o ${FASTQDIR}/${FASTQ} -t64 -C ${BATCH_SIZE}
+	#srun /usr/bin/time -v ${SLORADO} basecaller ${SLORADO_DIR}/models/${MODEL} ${BLOW5DIR}/${BLOW5} -o ${FASTQDIR}/${FASTQ} -t64 -C ${BATCH_SIZE}
+	srun ${SLORADO} basecaller ${SLORADO_DIR}/models/${MODEL} ${BLOW5DIR}/${BLOW5} -o ${FASTQDIR}/${FASTQ} -t64 -C ${BATCH_SIZE}
 done
