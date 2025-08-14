@@ -10,7 +10,8 @@
 
 set -euo pipefail
 
-DORADO=/scratch/$PAWSEY_ACCOUNT/$USER/slorado/dorado-0.9.6-linux-x64/bin/dorado
+DOR_VER=dorado-1.1.1-linux-x64 
+DORADO=/scratch/$PAWSEY_ACCOUNT/$USER/slorado/$DOR_VER/bin/dorado
 
 # Define input and output paths
 FASTQ_DIR="fastq"
