@@ -14,4 +14,4 @@ conda activate minimap
 if [[ $# -ne 3 ]]; then echo "$0  <reference> <sequences> <output>"; exit; fi
 
 
-minimap2 -t 16 -ax map-ont $1 $2 | samtools view -F 3584 -b --threads 16  | samtools sort -@ 16 -o $3 -
+minimap2 -t 16 --split-prefix mmsplit$$ -ax map-ont $1 $2 | samtools view -F 3584 -b --threads 16  | samtools sort -@ 16 -o $3 -

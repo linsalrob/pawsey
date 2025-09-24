@@ -13,5 +13,5 @@ conda activate minimap
 
 if [[ $# -ne 4 ]]; then echo "$0  <reference> <R1> <R2> <output>"; exit; fi
 
-minimap2 -t 16 -ax sr $1 $2 $3  | samtools view -F 3584 -b --threads 16  | samtools sort -@ 16 -o $4 -
+minimap2 -t 16 --split-prefix mmsplit$$ -ax sr $1 $2 $3  | samtools view -F 3584 -b --threads 16  | samtools sort -@ 16 -o $4 -
 
