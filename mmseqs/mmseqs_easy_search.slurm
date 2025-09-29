@@ -3,7 +3,7 @@
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=300G
+#SBATCH --mem=230G
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
 
