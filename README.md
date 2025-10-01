@@ -1,3 +1,15 @@
+# Cluster information
+
+[Pawsey partitions](https://pawsey.atlassian.net/wiki/spaces/US/pages/51929058/Running+Jobs+on+Setonix)
+
+On the wk queue there is 1840M per core, so either multiple the # cores by 1840M or divide the memory by 1840M to get the number of cores you should request.
+
+4G = 3 cores
+8G = 5 cores
+16G = 9 cores
+32G = 18 cores
+
+
 # User accounts, adding people, allocations, and acacia keys
 
 Check https://portal.pawsey.org.au
