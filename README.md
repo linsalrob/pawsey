@@ -9,6 +9,9 @@ On the wk queue there is 1840M per core, so either multiple the # cores by 1840M
 16G = 9 cores
 32G = 18 cores
 
+### Actual memory/cores requested:
+
+15G -> 18 cores (Job 32732860)
 
 # User accounts, adding people, allocations, and acacia keys
 
