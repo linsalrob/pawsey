@@ -4,7 +4,7 @@
 #SBATCH --time=2:00:00
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=18
 #SBATCH --mem=15GB
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -20,4 +20,17 @@ if [[ "$#" -ne 3 ]]; then
 	exit 1
 fi
 
-koverage run --reads $1 --ref $2 --output $3 --threads $SLURM_CPUS_PER_TASK 
+# uncompress the reference file if needed
+if [[ $2 == *.gz ]]; then
+    gunzip -c $2 > ${2%.gz}
+    REF=${2%.gz}
+    TODELETE=1
+else
+    REF=$2
+fi
+
+koverage run --reads $1 --ref $REF --output $3 --threads $SLURM_CPUS_PER_TASK 
+
+if [[ ${TODELETE:-0} -eq 1 ]]; then
+    rm $REF
+fi
