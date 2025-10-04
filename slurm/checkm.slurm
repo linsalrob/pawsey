@@ -3,7 +3,7 @@
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=32GB
+#SBATCH --mem=48GB
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
 
@@ -12,9 +12,10 @@ eval "$(conda shell.bash hook)"
 
 # if you need to recreate the checkm conda environment, use:
 # TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
-# mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP checkm-genome
+# mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP numpy matplotlib pysam hmmer prodigal pplacer
+# pip3 install checkm-genome
 
-TMP=f4f9caef6673
+TMP=bd5339834b62
 conda activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 
 export CHECKM_DATA_PATH=$HOME/Databases/checkm/
@@ -39,6 +40,6 @@ if [[ ! -e $CHECKM_DATA_PATH/selected_marker_sets.tsv ]]; then
 fi 
 
 
-checkm lineage_wf -t 18 -x fna $1 $2
+checkm lineage_wf -t 22 -x fna $1 $2
 
 
