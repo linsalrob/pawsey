@@ -4,7 +4,7 @@
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=2GB
+#SBATCH --mem=8GB
 #SBATCH -o slurm-%j.out
 #SBATCH -e slurm-%j.err
 
