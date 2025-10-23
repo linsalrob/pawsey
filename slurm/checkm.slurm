@@ -40,6 +40,5 @@ if [[ ! -e $CHECKM_DATA_PATH/selected_marker_sets.tsv ]]; then
 fi 
 
 
-checkm lineage_wf -t 22 -x fna $1 $2
-
+checkm lineage_wf -t 22 -x fna.gz $1 $2
 
