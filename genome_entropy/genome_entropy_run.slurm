@@ -11,10 +11,6 @@
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
-if [[ $# -ne 2 ]]; then
-    echo "Usage: sbatch pipeline.slurm <input genbank file> <output results>"
-    exit 1
-fi
 
 
 VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/genome_entropy"
@@ -25,4 +21,16 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
-genome_entropy run -g $1 -o $2 --multi-gpu 
+if [[ $# -eq 2 ]]; then
+	echo "Running: genome_entropy run -g $1 -o $2 --multi-gpu" >&2;
+	genome_entropy run -g $1 -o $2 --multi-gpu 
+	exit 0
+fi
+
+if [[ $# -eq 3 ]]; then
+	echo "Running: genome_entropy run -i $1 -g $2 -o $3 --multi-gpu" >&2;
+	genome_entropy run -i $1 -g $2 -o $3 --multi-gpu 
+	exit 0
+fi
+
+echo "Can't run with $# commands. Need either 2 or 3"
