@@ -11,9 +11,12 @@
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
-eval "$(conda shell.bash hook)"
-TMP=305294afb2c8
-if [[ ! -e /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP ]]; then echo "Please define the conda environment" >&2; exit 1; fi
-conda activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/genome_entropy"
+if [[ -e "$VENV_DIR" ]]; then 
+	echo "Please run the installer to create the venv" >&2;
+	exit 1;
+fi
 
-genome_entropy estimate-tokens --start 5000 --end 40000
+source "$VENV_DIR/bin/activate"
+
+genome_entropy estimate-tokens --start 5000 --end 40000 --log-level DEBUG
