@@ -21,15 +21,17 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
+ENCSZ=20000
+
 if [[ $# -eq 2 ]]; then
 	echo "Running: genome_entropy run -g $1 -o $2 --multi-gpu" >&2;
-	genome_entropy run -g $1 -o $2 --multi-gpu 
+	genome_entropy run -g $1 -o $2 --multi-gpu --encoding-size $ENCSZ
 	exit 0
 fi
 
 if [[ $# -eq 3 ]]; then
 	echo "Running: genome_entropy run -i $1 -g $2 -o $3 --multi-gpu" >&2;
-	genome_entropy run -i $1 -g $2 -o $3 --multi-gpu 
+	genome_entropy run -i $1 -g $2 -o $3 --multi-gpu --encoding-size $ENCSZ
 	exit 0
 fi
 
