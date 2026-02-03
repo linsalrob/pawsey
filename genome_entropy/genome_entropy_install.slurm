@@ -19,6 +19,7 @@ ROCM_MODULE_DEFAULT="rocm/6.4.1"
 VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/genome_entropy"
 PROJECT_PKGS=(
   genome_entropy
+  "accelerate>=1.12.0"
   "transformers>=4.30.0"
   "pygenetic_code>=0.20.0"
   "typer>=0.9.0"
