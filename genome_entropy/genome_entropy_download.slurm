@@ -3,7 +3,7 @@
 #SBATCH --account=pawsey1018-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu-dev
-#SBATCH --time=0-2
+#SBATCH --time=0-4
 #SBATCH --ntasks=1
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -19,4 +19,7 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
-genome_entropy download
+genome_entropy download --model Rostlab/ProstT5_fp16
+genome_entropy download --model gbouras13/modernprost-base
+genome_entropy download --model gbouras13/modernprost-profiles
+
