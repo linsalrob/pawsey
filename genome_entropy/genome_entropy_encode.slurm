@@ -11,6 +11,11 @@
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
+if [[ $# -ne 2 ]]; then
+	echo "$0 <input file> <output file>" >&2;
+	exit 2;
+fi
+
 VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/genome_entropy"
 if [[ ! -e "$VENV_DIR" ]]; then 
 	echo "Please run the installer to create the venv" >&2;
@@ -19,4 +24,4 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
-genome_entropy estimate-tokens --model  gbouras13/modernprost-base --start 1000000 --end 100000000 --step 1000000
+genome_entropy encode3di --model  gbouras13/modernprost-base --encoding-size 1000000 -i $1 -o $2

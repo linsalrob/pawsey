@@ -1,15 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=ge_run
 #SBATCH --account=pawsey1018-gpu
-#SBATCH --gres=gpu:8
+#SBATCH --gres=gpu:1
 #SBATCH --partition=gpu
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH -o slurm/%x-%j.out
 #SBATCH -e slurm/%x-%j.err
 
-set -euo pipefail
-trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+# I explicitly don't want ths, because if the code crashes, I want to carry on with the next genome :)
+# set -euo pipefail
+# trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 
 
@@ -21,11 +22,16 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
-ENCSZ=20000
+ENCSZ=1000000
 
-if [[ $# -ne 2 ]]; then
-	echo "$0 <genbank file> <output file>" >&2;
-	exit 1;
-fi
+mkdir -p bacteria_outputs/
 
-genome_entropy run -g $1 -o $2 --multi-gpu --encoding-size $ENCSZ
+for F in $(find bacteria -type f -printf "%f\n"); do 
+	J=$(basename $F .gbff.gz); 
+	echo $F $J; 
+	if [[ ! -e bacteria_outputs/$J.json.gz ]]; then
+		genome_entropy run -g bacteria/$F -o bacteria_outputs/$J.json.gz --encoding-size $ENCSZ
+	fi
+done
+
+
