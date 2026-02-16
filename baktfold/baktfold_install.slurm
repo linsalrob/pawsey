@@ -2,7 +2,7 @@
 #SBATCH --account=pawsey1018-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu-dev
-#SBATCH --job-name=ge_install
+#SBATCH --job-name=bk_install
 #SBATCH --time=0-1
 #SBATCH --ntasks=1
 #SBATCH -o %x-%j.out
@@ -20,7 +20,7 @@ trap 's=$?; echo "$0: Error on line $LINENO: $BASH_COMMAND"; exit $s' ERR
 #
 ############################################
 
-VENV_DIR="${VENV_DIR:/scratch/pawsey1018/edwa0468/software/pip/baktfold}"
+VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold}"
 FOLDSEEK_URL="https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
 TMP_DIR="$(mktemp -d)"
 INSTALL_DIR="$VENV_DIR/opt/foldseek"
