@@ -20,29 +20,36 @@ trap 's=$?; echo "$0: Error on line $LINENO: $BASH_COMMAND"; exit $s' ERR
 #
 ############################################
 
-VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold}"
+VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold"
+
 FOLDSEEK_URL="https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+
+ARIA2_VERSION="1.37.0"
+ARIA2_URL="https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/aria2-${ARIA2_VERSION}.tar.gz"
+
 TMP_DIR="$(mktemp -d)"
 INSTALL_DIR="$VENV_DIR/opt/foldseek"
 
 ROCM_MODULE_DEFAULT="rocm/6.4.1"
 PROJECT_PKGS=(
-  baktfold
-  "click >=8.0.0",
-  "loguru >=0.5.3",
-  "pyyaml >=6.0",
-  "pandas >=1.4.2",
-  "biopython >=1.80",
-  "datasets >=2.15",
-  "requests >=2.25",
-  "sentencepiece >=0.1.99",
-  "transformers >=4.34",
-  "pyarrow >=14.0.0",
-  "alive-progress >=3.0.1",
-  "numpy >=1.20,<2",
-  "h5py >=3.5",
-  "tqdm >=4.35.0",
-  "xopen >=1.5.0"
+  baktfold 
+  "click >=8.0.0" 
+  "loguru >=0.5.3" 
+  "pyyaml >=6.0" 
+  "pandas >=1.4.2" 
+  "biopython >=1.80" 
+  "datasets >=2.15" 
+  "requests >=2.25" 
+  "sentencepiece >=0.1.99" 
+  "transformers >=4.34" 
+  "protobuf>=6.33.1" 
+  "pyarrow >=14.0.0" 
+  "alive-progress >=3.0.1" 
+  "numpy >=1.20,<2" 
+  "h5py >=3.5" 
+  "tqdm >=4.35.0" 
+  "xopen >=1.5.0" 
+  tiktoken
 )
 
 # ------------------------
@@ -123,8 +130,10 @@ python -m pip install "${PROJECT_PKGS[@]:1}"
 
 
 ############################################
-# Download and install Foldseek
+# Download and install Foldseek and aria2c
 ############################################
+
+pushd "$TMP_DIR"
 
 mkdir -p "$VENV_DIR/opt"
 mkdir -p "$VENV_DIR/bin"
@@ -135,7 +144,6 @@ echo "Installing Foldseek into: $INSTALL_DIR"
 # Download
 ############################################
 
-pushd "$TMP_DIR"
 wget -q "$FOLDSEEK_URL" -O foldseek.tar.gz
 
 
@@ -170,15 +178,39 @@ for bin in "$INSTALL_DIR/bin/"*; do
 done
 
 ############################################
+# Install aria2c
+############################################
+
+INSTALL_DIR="$VENV_DIR/opt/aria2"
+echo "Installing aria2c from $ARIA2_URL into $INSTALL_DIR"
+
+wget -q "$ARIA2_URL" -O aria2.tar.gz
+tar -xzf aria2.tar.gz
+
+cd "aria2-${ARIA2_VERSION}"
+
+
+
+############################################
+# Configure, Build, Install
+############################################
+
+./configure --prefix="$INSTALL_DIR"
+make -j$(nproc)
+make install
+
+ln -sf "$INSTALL_DIR/bin/aria2c" "$VENV_DIR/bin/aria2c"
+
+############################################
 # Cleanup
 ############################################
 
+popd
 rm -rf "$TMP_DIR"
 
 echo "Foldseek installation complete."
 echo "Binaries available in: $VENV_DIR/bin"
 
-popd
 
 echo "Running pip check"
 python -m pip check || true
@@ -201,10 +233,23 @@ except Exception as e:
     print("Torch check failed:", e)
 
 try:
-    import genome_entropy
-    print("genome_entropy:", getattr(genome_entropy, "__version__", "unknown"))
+    import baktfold
+    print("baktfold:", getattr(baktfold, "__version__", "unknown"))
 except Exception as e:
-    print("genome_entropy import failed:", e)
+    print("baktfold import failed:", e)
 PY
+
+source $VENV_DIR/bin/activate
+
+echo "Checking Foldseek:"
+foldseek version
+
+echo "Checking aria2c"
+aria2c --version
+
+echo "Installing baktfold databases"
+baktfold install -d ~/Databases/baktfold_db -t 8
+baktfold install -d ~/Databases/baktfold_db --foldseek-gpu
+
 
 echo "Done. Virtual env at: ${VENV_DIR}"
