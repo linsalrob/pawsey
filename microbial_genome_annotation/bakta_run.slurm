@@ -23,5 +23,5 @@ TMP=f95d9fdce5b0
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 
 BAKTA_DB=/scratch/pawsey1018/edwa0468/Databases/bakta/db
-bakta --db $BAKTA_DB --output $2 $1
+bakta --keep-contig-headers --db $BAKTA_DB --output $2 $1
 
