@@ -13,10 +13,11 @@
 
 
 #SBATCH --job-name=mmseqsET
+#SBATCH --partition=highmem
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=200G
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=256G
 #SBATCH -o mmseqsET-%j.out
 #SBATCH -e mmseqsET-%j.err
 
@@ -75,10 +76,10 @@ OUTPUT=$OUTDIR/$OUTFILE.mmseqs.$DB
 
 TMP=$(mktemp -d -p /scratch/$PAWSEY_PROJECT/$USER/tmp)
 
-echo "Running $MMSEQS easy-taxonomy $1 $DBSOURCE/$DB $OUTPUT $TMP --threads 32" 2>&1;
+echo "Running $MMSEQS easy-taxonomy $1 $DBSOURCE/$DB $OUTPUT $TMP --threads 64" 2>&1;
 
 
-$MMSEQS easy-taxonomy $1 $DBSOURCE/$DB $OUTPUT $TMP --threads 32
+$MMSEQS easy-taxonomy $1 $DBSOURCE/$DB $OUTPUT $TMP --threads 64
 
 echo "Fin " `date` >&2;
 
