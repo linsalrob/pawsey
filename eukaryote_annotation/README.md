@@ -12,8 +12,11 @@ We're going to use [funannoate](https://github.com/nextgenusfs/funannotate) from
 
 Convert the docker image to a singularity image
 
-(Instructions lost in the mists of time ... only you can recreate them!)
-
+```
+mkdir sif
+module load singularity/4.1.0-slurm
+singularity pull --dir sif docker://nextgenusfs/funannotate
+```
 
 ## 1. Set up funannoatate
 
