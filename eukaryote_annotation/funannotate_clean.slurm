@@ -20,7 +20,10 @@ module load singularity/4.1.0-slurm
 
 
 # Clean the genome
-singularity run --bind `pwd`:/data /home/edwa0468/GitHubs/pawsey/eukaryote_annotation/sif/funannotate_latest.sif funannotate clean -i /data/$1  -o /data/${1/.fa/.clean.fa} --cpus 256
+
+# This sets the environment variable FUNANNOTATE_DB in the singularity container. Note that below we bind that to our database location
+export SINGULARITYENV_FUNANNOTATE_DB=/funannotate
+singularity run --bind $HOME/Databases/funannotate:/funannotate,`pwd`:/data /home/edwa0468/GitHubs/pawsey/eukaryote_annotation/sif/funannotate_latest.sif funannotate clean -i /data/$1  -o /data/${1/.fa/.clean.fa} --cpus 256
 
 
 
