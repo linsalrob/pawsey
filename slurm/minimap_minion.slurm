@@ -7,9 +7,21 @@
 #SBATCH -o minimap-%j.out
 #SBATCH -e minimap-%j.err
 
+###################################################
+#
+# MAKE SURE YOU CREATE THIS ENVIRONMENT!
+#
+# mamba create -y --prefix=/scratch/$PAWSEY_ACCOUNT/$USER/software/miniconda3/minimap minimap2 samtools
+#
+#
+###################################################
+
 set -euo pipefail
+trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+
 eval "$(conda shell.bash hook)"
-conda activate minimap
+conda activate /scratch/$PAWSEY_ACCOUNT/$USER/software/miniconda3/minimap
+
 
 if [[ $# -ne 3 ]]; then echo "$0  <reference> <sequences> <output>"; exit; fi
 
