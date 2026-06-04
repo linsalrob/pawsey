@@ -11,8 +11,8 @@
 set -euo pipefail
 eval "$(conda shell.bash hook)"
 # TMP is a temp conda environment with cutadapt installed
-TMP=108aa9c8a6f0
-conda activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+TMP=7199822bc36d
+conda activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$TMP
 
 # Define input and output paths
 FASTQ_DIR="fastq"
