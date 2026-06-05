@@ -10,7 +10,8 @@
 
 set -euo pipefail
 
+SLOW5VER="1.4.0"
 for BLOW in $(find Run1/blow5 -type f); do 
-	/home/edwa0468/Projects/CF/Promethion/slow5tools-v1.3.0/slow5tools stats $BLOW;
+	 ~/scratch/slorado/slow5tools-v${SLOW5VER}/slow5tools stats stats $BLOW;
 done
 
