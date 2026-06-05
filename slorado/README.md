@@ -66,6 +66,12 @@ blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
 
 I recommend, at this point, running [slow5tools stats](https://github.com/hasindu2008/slow5tools) on all the `blow5` files. This will tell you (a) if the files converted OK, and (b) how many reads there are per file. Then, when slorado is done, it is easy to cross check the number of sequences in the fastq file and blow5 files.
 
+
+```
+sbatch slow5stats.slurm
+```
+
+
 ## Run slorado
 
 ### Install slorado
@@ -84,18 +90,31 @@ Note, when I was converting ~100 files the `gpu-dev` could do about 1/2 at time 
 
 ## Demultiplexing
 
-If you have used barcodes, there are a couple of ways that you can separate the fastq files into separate files. The cutadapt.slurm script uses [cutadapt](https://cutadapt.readthedocs.io/en/stable/) to split the fastq files. This needs the barcodes as a fasta file.
+If you have used barcodes, there are a couple of ways that you can separate the fastq files into separate files. 
+
+
+The cutadapt.slurm script uses [cutadapt](https://cutadapt.readthedocs.io/en/stable/) to split the fastq files. This needs the barcodes as a fasta file.
+
+Bas's student wrote [barbell](https://github.com/rickbeeloo/barbell) and so we should use that!
 
 If you are going to use this, make a temporary conda installation with cutadapt:
 
 ```
 TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
-mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  cutadapt
+mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  cutadapt barbell
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
 echo -e "Add this line at the start of cutadapt.slurm:\nTMP=$TMP"
 ```
 
-Make sure you change the value of TMP in the `cutadapt.slurm` file.
+Make sure you change the value of TMP in the `cutadapt.slurm` file or the `barbell.slurm` file.
+
+### Barbell
+
+
+
+
+### Cutadapt
+
 
 Once you have created the output files, you will get a _lot_ of separate barcode files. Here is one way to join them into unique barcode files:
 
