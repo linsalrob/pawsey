@@ -13,4 +13,4 @@ source /scratch/$PAWSEY_PROJECT/$USER/slorado/blue-crab-venv/bin/activate
 
 BASE=.
 
-blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
+blue-crab -v p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
