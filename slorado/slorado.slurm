@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=0-4
+#SBATCH --time=0-12
 #SBATCH -o slorado-%j.out
 #SBATCH -e slorado-%j.err
 
@@ -24,7 +24,8 @@ MODEL=dna_r10.4.1_e8.2_400bps_hac@v5.0.0
 BATCH_SIZE=200
 
 # where did you install slorado
-SLORADO_DIR=/scratch/$PAWSEY_PROJECT/$USER/slorado/slorado-v0.5.0-beta
+SLORADO_VER=v0.5.0-beta
+SLORADO_DIR=/scratch/$PAWSEY_PROJECT/$USER/slorado/slorado-$SLORADO_VER
 SLORADO=${SLORADO_DIR}/bin/slorado
 
 if [[ ! -e ${SLORADO} ]]; then
