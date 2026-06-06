@@ -5,8 +5,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=64GB
-#SBATCH -o cutadapt-%j.out
-#SBATCH -e cutadapt-%j.err
+#SBATCH -o %x-%j.out
+#SBATCH -e %x-%j.err
 
 set -euo pipefail
 eval "$(conda shell.bash hook)"

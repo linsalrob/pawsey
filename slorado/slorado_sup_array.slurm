@@ -1,11 +1,12 @@
 #!/bin/bash --login
 #SBATCH --partition=gpu-highmem
+#SBATCH --job-name=slorado
 #SBATCH --gres=gpu:8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=1-0
-#SBATCH -o slorado-%A_%a.out
-#SBATCH -e slorado-%A_%a.err
+#SBATCH -o %x-%A_%a.out
+#SBATCH -e %x-%A_%a.err
 
 set -euo pipefail
 

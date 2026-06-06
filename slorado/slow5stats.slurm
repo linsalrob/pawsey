@@ -5,8 +5,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=64GB
-#SBATCH -o slow5stats-%j.out
-#SBATCH -e slow5stats-%j.err
+#SBATCH -o %x-%j.out
+#SBATCH -e %x-%j.err
 
 set -euo pipefail
 

@@ -4,8 +4,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=128GB
-#SBATCH -o bluecrab-%j.out
-#SBATCH -e bluecrab-%j.err
+#SBATCH -o %x-%j.out
+#SBATCH -e %x-%j.err
 
 set -euo pipefail
 

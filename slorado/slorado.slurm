@@ -1,11 +1,12 @@
 #!/bin/bash --login
 #SBATCH --partition=gpu-dev
+#SBATCH --job-name=slorado
 #SBATCH --gres=gpu:8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=0-12
-#SBATCH -o slorado-%j.out
-#SBATCH -e slorado-%j.err
+#SBATCH -o %x-%j.out
+#SBATCH -e %x-%j.err
 
 # usage: sbatch --account=${PAWSEY_PROJECT}-gpu ~/GitHubs/pawsey/slorado/slorado.slurm
 
