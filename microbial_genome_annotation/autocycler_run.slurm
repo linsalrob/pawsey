@@ -39,7 +39,7 @@ export PLASSEMBLER_DB=$CONDA_PREFIX/plassembler/
 reads=$1
 output=$2
 TMPDIR=$(mktemp -dp /scratch/$PAWSEY_ACCOUNT/$USER)
-echo "Temporary files in $TMPDIR"
+echo "Temporary files are being written to $TMPDIR" >&2
 
 
 # Get arguments.
@@ -50,8 +50,11 @@ read_type=${3:-ont_r10}          # read type (default = ont_r10)
 # Input assembly jobs that exceed this time limit will be killed
 max_time="8h"
 
-# the default for this is 25, but some of my assemblies have 45
+# the default for this is 25, but some of my assemblies have 45 or 100 contigs
 MAXCONTIGS=100
+
+# the default minimum read depth was 25, but some of my samples have fewer reads, and 10 works!
+MINREADDEPTH=10
 
 # Validate input parameters
 if [[ -z "$reads" || -z "$threads" || -z "$jobs" ]]; then
@@ -72,7 +75,7 @@ genome_size=$(autocycler helper genome_size --reads "$reads" --threads "$threads
 
 # Step 1: subsample the long-read set into multiple files
 # NOTE: RAE has reduced --min_read_depth from the default 25 to 10 here because one sample has fewer reads.
-autocycler subsample --reads "$reads" --out_dir $TMPDIR/subsampled_reads --genome_size "$genome_size" --min_read_depth 10
+autocycler subsample --reads "$reads" --out_dir $TMPDIR/subsampled_reads --genome_size "$genome_size" --min_read_depth $MINREADDEPTH
 
 # Step 2: assemble each subsampled file
 mkdir -p $TMPDIR/assemblies
