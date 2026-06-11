@@ -11,10 +11,6 @@
 # Note: this is a slurmified version of the autocycler code from https://github.com/rrwick/Autocycler/tree/main/pipelines/Automated_Autocycler_Bash_script_by_Ryan_Wick
 #
 
-# location of the autocycler installation
-CONDAENV=autocycler
-# location of the PLASSEMBLER Databases
-export PLASSEMBLER_DB=$HOME/Databases/plassembler/
 
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
@@ -24,9 +20,13 @@ if [[ $# != 2 ]]; then
 	exit 2;
 fi
 
+# location of the autocycler installation
+CONDAENV=autocycler
 eval "$(mamba shell hook --shell bash)"
 mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
 
+# location of the PLASSEMBLER Databases
+export PLASSEMBLER_DB=$CONDA_PREFIX/plassembler/
 
 # This script is a wrapper for running a fully-automated Autocycler assembly.
 

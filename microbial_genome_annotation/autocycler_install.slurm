@@ -16,10 +16,10 @@ eval "$(mamba shell hook --shell bash)"
 CONDAENV=autocycler
 mamba env create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV -f  autocycler.yaml
 echo -e "autocycler installed in $CONDAENV\n\nmamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV"
-echo "Installing databases"
-mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
 
-export PLASSEMBLER_DB=$HOME/Databases/plassembler/
+mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
+export PLASSEMBLER_DB=$CONDA_PREFIX/plassembler/
+echo "Installing the databases into $PLASSEMBLER_DB"
 rm -rf $PLASSEMBLER_DB
 plassembler download -d $PLASSEMBLER_DB
 
