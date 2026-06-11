@@ -12,7 +12,7 @@
 #
 
 # location of the autocycler installation
-TMP=5b87b46d65df
+CONDAENV=autocycler
 # location of the PLASSEMBLER Databases
 export PLASSEMBLER_DB=$HOME/Databases/plassembler/
 
@@ -25,7 +25,7 @@ if [[ $# != 2 ]]; then
 fi
 
 eval "$(mamba shell hook --shell bash)"
-mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
 
 
 # This script is a wrapper for running a fully-automated Autocycler assembly.
@@ -43,9 +43,9 @@ echo "Temporary files in $TMPDIR"
 
 
 # Get arguments.
-threads=32               # threads per job
-jobs=4                  # number of simultaneous jobs
-read_type=${3:-ont_r10}  # read type (default = ont_r10)
+threads=$SLURM_CPUS_PER_TASK     # threads per job
+jobs=4                           # number of simultaneous jobs
+read_type=${3:-ont_r10}          # read type (default = ont_r10)
 
 # Input assembly jobs that exceed this time limit will be killed
 max_time="8h"
