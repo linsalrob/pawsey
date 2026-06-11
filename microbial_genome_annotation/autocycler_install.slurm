@@ -12,11 +12,12 @@ set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 eval "$(mamba shell hook --shell bash)"
-TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
-mamba env create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP -f  autocycler.yaml
-echo -e "autocycler installed in $TMP\n\nmamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP"
+#TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
+CONDAENV=autocycler
+mamba env create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV -f  autocycler.yaml
+echo -e "autocycler installed in $CONDAENV\n\nmamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV"
 echo "Installing databases"
-mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
 
 export PLASSEMBLER_DB=$HOME/Databases/plassembler/
 rm -rf $PLASSEMBLER_DB
