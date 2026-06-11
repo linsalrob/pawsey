@@ -21,6 +21,7 @@ OUTPUT_DIR="demuxed_reads"
 # Create output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"
 
+echo "PLEASE CHECK THE BARBELL GITHUB, I THINK YOU CAN RUN ONE COMMAND TO PROCESS ALL FILES"
 
 # Loop through each FASTQ file in the directory
 SAMPLE=0
