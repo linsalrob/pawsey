@@ -12,6 +12,6 @@ set -euo pipefail
 
 SLOW5VER="1.4.0"
 for BLOW in $(find ./blow5 -type f); do 
-	 ~/scratch/slorado/slow5tools-v${SLOW5VER}/slow5tools stats $BLOW;
+	 /scratch/$PAWSEY_PROJECT/$USER/slorado/slow5tools-v${SLOW5VER}/slow5tools stats $BLOW;
 done
 

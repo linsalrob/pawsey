@@ -7,8 +7,8 @@ Make a directory on `/scratch` and install [blue-crab](https://github.com/Psy-Fe
 # Installation
 
 ```
-mkdir ~/scratch/slorado
-cd ~/scratch/slorado
+mkdir /scratch/$PAWSEY_PROJECT/$USER/slorado
+cd /scratch/$PAWSEY_PROJECT/$USER/slorado
 ```
 
 
@@ -48,18 +48,19 @@ Use this slurm script to run blue-crab
 #SBATCH --job-name=bluecrab
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=128GB
 #SBATCH -o bluecrab-%j.out
 #SBATCH -e bluecrab-%j.err
-                                                                                                                                                                                                                 set -euo pipefail
+
+set -euo pipefail
 # change this to where you installed blue-crab
-source /home/edwa0468/scratch_1018/slorado/blue-crab-venv/bin/activate
+source /scratch/$PAWSEY_PROJECT/$USER/slorado/blue-crab-venv/bin/activate
 
 # change this to the appropriate data directory
-BASE=/home/edwa0468/scratch_1018/CF/Promethion/CF_PromethION_matched_samples/CF_PromethION_matched_samples_Run2/20250314_1541_P2S-02700-B_PBA71146_20fca30d
+BASE=/scratch/$PAWSEY_PROJECT/$USER/PromethION/20250314_1541_P2S-02700-B_PBA71146_20fca30d
 
-blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
+blue-crab p2s --out-dir $BASE/blow5/ --compress zlib --threads $SLURM_CPUS_PER_TASK $BASE/pod5
 ```
 
 ## Slow5Stats
@@ -100,18 +101,15 @@ Bas's student wrote [barbell](https://github.com/rickbeeloo/barbell) and so we s
 If you are going to use this, make a temporary conda installation with cutadapt:
 
 ```
-TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
-mamba create -y --prefix=/scratch/pawsey1018/edwa0468/software/miniconda3/$TMP  cutadapt barbell
-mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
-echo -e "Add this line at the start of cutadapt.slurm:\nTMP=$TMP"
+mamba create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/trimming cutadapt barbell
+mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/trimming
 ```
-
-Make sure you change the value of TMP in the `cutadapt.slurm` file or the `barbell.slurm` file.
 
 ### Barbell
 
 
-
+NOTE: Please refer to the barbell page: [barbell](https://github.com/rickbeeloo/barbell). In response to my issue, Rick updated the code and so my code is now
+out of date!
 
 ### Cutadapt
 

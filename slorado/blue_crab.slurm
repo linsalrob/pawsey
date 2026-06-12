@@ -2,7 +2,7 @@
 #SBATCH --job-name=bluecrab
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=128GB
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -13,4 +13,4 @@ source /scratch/$PAWSEY_PROJECT/$USER/slorado/blue-crab-venv/bin/activate
 
 BASE=.
 
-blue-crab -v p2s --out-dir $BASE/blow5/ --compress zlib --threads 16 $BASE/pod5
+blue-crab -v p2s --out-dir $BASE/blow5/ --compress zlib --threads $SLURM_CPUS_PER_TASK $BASE/pod5
