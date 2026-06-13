@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=1-0
+#SBATCH --time=00:20:00
 #SBATCH -o %x-%A_%a.out
 #SBATCH -e %x-%A_%a.err
 
@@ -12,6 +12,7 @@ set -euo pipefail
 
 # usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1:N:1 slorado_sup_array.slurm
 
+# note: the 20 minute time came from job id 43758188 which has ~100 jobs
 
 if [[ $# -eq 0 ]]; then
 	echo "usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-JOBS:1 slorado_array.slurm BLOW5_DIR" >&2;
