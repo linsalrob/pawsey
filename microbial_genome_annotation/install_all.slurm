@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu-dev
 #SBATCH --job-name=install
-#SBATCH --time=0-1
+#SBATCH --time=0-4
 #SBATCH --ntasks=1
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -14,6 +14,10 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 eval "$(mamba shell hook --shell bash)"
 
 CONDAENV=microbial_annotations
+if [[ -e /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV ]]; then
+	mamba env remove --yes --prefix /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
+fi
+
 mamba env create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV -f  autocycler.yaml
 echo -e "autocycler installed in $CONDAENV\n\nmamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV"
 
