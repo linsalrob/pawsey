@@ -17,9 +17,9 @@ mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$CONDAENV
 
 
 if [[ $# -eq 3 ]]; then
-    dnaapler all -i $1 -o $2 -p $3 -t 8
+    dnaapler all -i $1 -o $2 -p $3 -t $SLURM_CPUS_PER_TASK
 elif [[ $# -eq 2 ]]; then 
-    dnaapler all -i $1 -o $2 -t 8
+    dnaapler all -i $1 -o $2 -t $SLURM_CPUS_PER_TASK
 else
     echo "$0 <contigs file> <output file> <optional bacterial name>" >&2;
     exit 1
