@@ -21,7 +21,8 @@ if [[ $# != 2 ]]; then
 fi
 
 # location of the autocycler installation
-CONDAENV=autocycler
+# CONDAENV=autocycler
+CONDAENV=microbial_annotations
 eval "$(mamba shell hook --shell bash)"
 mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
 

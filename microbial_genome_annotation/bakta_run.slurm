@@ -19,8 +19,8 @@ fi
 
 
 eval "$(mamba shell hook --shell bash)"
-TMP=f95d9fdce5b0
-mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+CONDAENV=microbial_annotations
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$CONDAENV
 
 BAKTA_DB=/scratch/pawsey1018/edwa0468/Databases/bakta/db
 bakta --keep-contig-headers --db $BAKTA_DB --output $2 $1

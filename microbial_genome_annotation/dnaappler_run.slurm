@@ -12,8 +12,8 @@ set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 eval "$(mamba shell hook --shell bash)"
-TMP=d9ebf2f973b8
-mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$TMP
+CONDAENV=microbial_annotations
+mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$CONDAENV
 
 
 if [[ $# -eq 3 ]]; then
