@@ -16,8 +16,12 @@ mkdir -p ~/Databases/GTDB
 cd ~/Databases/GTDB
 
 # Download GTDB
-wget https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz
-tar -xvzf gtdbtk_data.tar.gz
+# wget https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz
+# tar -xvzf gtdbtk_data.tar.gz
+
+# I think the sif is fixed on r226
+wget https://data.ace.uq.edu.au/public/gtdb/data/releases/release226/226.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz
+tar -xvzf gtdbtk_r226_data.tar.gz
 
 
 
