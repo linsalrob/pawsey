@@ -19,5 +19,5 @@ fi
 VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold"
 source $VENV_DIR/bin/activate
 
-baktfold run -i $1 -o $2 -d ~/Databases/baktfold_db -f -t 16 
+baktfold run -i $1 -o $2 -d /scratch/references/baktfold_db -f -t $SLURM_CPUS_PER_TASK 
 

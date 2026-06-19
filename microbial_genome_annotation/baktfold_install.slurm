@@ -248,8 +248,8 @@ echo "Checking aria2c"
 aria2c --version
 
 echo "Installing baktfold databases"
-baktfold install -d ~/Databases/baktfold_db -t 8
-baktfold install -d ~/Databases/baktfold_db --foldseek-gpu
-
+# baktfold install -d ~/Databases/baktfold_db -t 8
+# baktfold install -d ~/Databases/baktfold_db --foldseek-gpu
+echo "Use the databases in /scratch/references/baktfold_db"
 
 echo "Done. Virtual env at: ${VENV_DIR}"
