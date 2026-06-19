@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=pawsey1018
-#SBATCH --job-name=RobSimple
+#SBATCH --job-name=gtdbdld
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
