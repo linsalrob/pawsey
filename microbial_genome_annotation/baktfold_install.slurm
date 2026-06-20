@@ -31,6 +31,7 @@ TMP_DIR="$(mktemp -d)"
 INSTALL_DIR="$VENV_DIR/opt/foldseek"
 
 ROCM_MODULE_DEFAULT="rocm/6.4.1"
+PYTHON_MODULE_DEFAULT="python/3.11.6"
 PROJECT_PKGS=(
   baktfold 
   "click >=8.0.0" 
@@ -56,6 +57,7 @@ PROJECT_PKGS=(
 # 1) Load ROCm module
 # ------------------------
 module load "${ROCM_MODULE_DEFAULT}"
+module load "${PYTHON_MODULE_DEFAULT}"
 
 # Discover the loaded rocm/<version> (prefer module list; fallback to default)
 loaded_rocm_mod="$(
@@ -71,6 +73,8 @@ rocm_major_minor="$(echo "${rocm_ver}" | awk -F. '{print $1 "." $2}')"
 rocm_index="https://download.pytorch.org/whl/rocm${rocm_major_minor}"
 
 echo "Loaded ROCm module : ${loaded_rocm_mod}"
+echo "Python executable  : $(command -v python)"
+echo "Python version     : $(python --version)"
 echo "ROCm wheel channel : rocm${rocm_major_minor}"
 echo "PyTorch index-url  : ${rocm_index}"
 
@@ -126,7 +130,7 @@ python -m pip install --index-url "${rocm_index}" "${TORCH_SPEC}" "${VISION_SPEC
 python -m pip install --no-deps "${PROJECT_PKGS[0]}"
 
 # Then install the rest of your runtime deps explicitly (excluding torch*)
-python -m pip install "${PROJECT_PKGS[@]:1}"
+python -m pip install --only-binary=:all: "${PROJECT_PKGS[@]:1}"
 
 
 ############################################
