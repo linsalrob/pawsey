@@ -2,8 +2,8 @@
 #SBATCH --account=pawsey1018-gpu
 #SBATCH --job-name=bk_run
 #SBATCH --gres=gpu:8
-#SBATCH --partition=gpu
-#SBATCH --time=1-0
+#SBATCH --partition=gpu-dev
+#SBATCH --time=0-4
 #SBATCH --ntasks=1
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -19,5 +19,5 @@ fi
 VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold"
 source $VENV_DIR/bin/activate
 
-baktfold run -i $1 -o $2 -d /scratch/references/baktfold_db -f -t $SLURM_CPUS_PER_TASK 
+baktfold run -i $1 -o $2 -d /scratch/references/baktfold_db -f -t 16
 
