@@ -27,7 +27,7 @@ blue-crab --help
 Checkout the code. Definitely confirm on Bonson's site whether this is the latest version!
 
 ```
-VERSION=v0.3.0-beta
+VERSION=v0.5.0-beta
 GPU=rocm
 wget "https://github.com/BonsonW/slorado/releases/download/$VERSION/slorado-$VERSION-x86_64-$GPU-linux-binaries.tar.xz"
 tar xvf slorado-$VERSION-x86_64-$GPU-linux-binaries.tar.xz
