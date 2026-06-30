@@ -15,7 +15,8 @@ set -euo pipefail
 # note: the 20 minute time came from job id 43758188 which has ~100 jobs
 
 if [[ $# -eq 0 ]]; then
-	echo "usage: sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-JOBS:1 slorado_array.slurm BLOW5_DIR" >&2;
+	echo -n "Usage:\n\n JOBS=$(ls pod5/ | wc -l)" >&2
+	echo " sbatch --account=${PAWSEY_PROJECT}-gpu --array=1-$JOBS:1 ~/GitHubs/pawsey/slorado/slorado_sup_array.slurm blow5/ ">&2
 fi
 
 BLOW5DIR=$1

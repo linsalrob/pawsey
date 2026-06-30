@@ -31,7 +31,7 @@ module load singularity/3.11.4-slurm
 
 
 singularity exec --bind $DBDIR:/refdata,$FADIR:/data $SIFDIR/gtdbtk_latest.sif \
-    gtdbtk classify_wf --genome_dir /data --out_dir /data/gtdb --cpus 32 --extension fna
+    gtdbtk classify_wf --genome_dir /data --out_dir /data/gtdb --cpus 32 --extension fasta
 
 
 
