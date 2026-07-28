@@ -1,0 +1,33 @@
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/agtools"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/agviz"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/pawsey"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/EdwardsLab"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/genbank_to"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/recommend_a_journal"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/genome_entropy"]
+trust_level = "trusted"
+
+[projects."/scratch/pawsey1018/edwa0468/GitHubs/genbank_viewer"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+"gpt-5.6-sol" = 4
+
+[apps.connector_76869538009648d5b282a4bb21c3d157.tools."github.create_pull_request"]
+approval_mode = "approve"
+
+approval_policy = "never"
+sandbox_mode = "workspace-write"
