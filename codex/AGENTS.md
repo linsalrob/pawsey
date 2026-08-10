@@ -78,17 +78,6 @@ When a request depends on recency, including words such as “latest”, “curr
 - Use preview, validation, or dry-run modes when they are supported and materially useful.
 - Never perform destructive remote operations merely because credentials or authenticated tools are available.
 
-## Routine command execution
-
-Codex may run non-destructive commands needed to inspect and validate the workspace without asking again, including:
-
-- file and repository inspection;
-- `git status`, `git diff`, and read-only history inspection;
-- repository-defined formatting, linting, type-checking, testing, and build commands;
-- targeted dependency metadata and documentation queries;
-- commands that inspect environment, scheduler, accelerator, filesystem, or tool versions.
-
-Commands that alter remote state, delete data, rewrite history, change machine-wide configuration, or modify production resources remain subject to the restrictions below.
 
 ## Execution environment
 
@@ -150,12 +139,11 @@ Commands that alter remote state, delete data, rewrite history, change machine-w
 ## Remote operations
 
 - Non-destructive local repository operations may be performed without additional approval when relevant to the requested task. Discarding changes, destructive cleanup, deleting branches, or rewriting history requires explicit authorization.
-- Remote write operations, including `git push`, creating or modifying pull requests, merging, publishing releases, modifying issues, or changing repository settings, require explicit user intent.
-- A request such as “push this”, “open a PR”, or “publish these changes” counts as explicit authorisation for the corresponding operation.
 - Never force-push, merge, delete remote branches, publish releases, or modify production resources unless explicitly requested.
 - Prefer non-destructive API operations.
 - Use dry-run or preview modes when supported and materially useful.
 - Report the exact remote write actions performed.
+
 
 ## Pre-approved routine commands
 
@@ -166,32 +154,155 @@ These workflow approvals do not override sandbox, filesystem, network, host, sch
 
 ### Repository inspection
 
-- `git status`
-- `git diff`
-- `git diff --staged`
-- `git log`
-- `git show`
-- `git branch --show-current`
-- `git remote -v`
-- `git fetch`
-- `git ls-files`
-- `git grep`
+The user has approved these command families for routine work:
+
+```text
+git add <explicit-in-scope-paths>
+git branch --show-current
+git commit -m <descriptive-message>
+git diff
+git diff --cached --check
+git diff --cached --stat
+git diff --check
+git fetch origin
+git fetch origin <relevant-branch>
+git grep
+git log
+git ls-files
+git pull --ff-only
+git push
+git push -u origin <current-task-branch>
+git remote -v
+git show
+git status
+git switch -c <task-branch>
+git switch main
+```
+
+Deleting a local task branch is approved only after the user states that its pull request
+has been merged and identifies or clearly implies that branch. This does not authorize
+remote branch deletion:
+
+```text
+git branch -d <merged-local-task-branch>
+```
+
+`git push` and `git push -u origin <current-task-branch>` are pre-approved when
+the current user request clearly implies publication, pull-request preparation,
+CI validation, or updating an existing remote task branch. They are not approved
+for pushing unrelated local commits, pushing directly to a protected/default
+branch, changing remotes, deleting remote branches, or force-pushing.
 
 ### GitHub inspection
 
 Long-running monitoring commands must use bounded waits or provide periodic progress updates, and should stop when the requested terminal condition is reached.
 
-- `gh repo view`
-- `gh pr list`
-- `gh pr view`
-- `gh pr diff`
-- `gh pr checks`
-- `gh issue list`
-- `gh issue view`
-- `gh run list`
-- `gh run view`
-- `gh run watch`
-- `gh api` when used with a read-only `GET` request
+When the user asks to create, update, monitor, or address feedback on a pull request, the
+following authenticated GitHub CLI operations are approved:
+
+```text
+gh repo view
+gh pr list
+gh pr diff
+gh issue list
+gh issue view
+
+gh --version
+gh auth status
+gh pr create ...
+gh pr view <current-pr> ...
+gh pr checks <current-pr> ...
+gh pr comment <current-pr> --body "@codex review"
+gh run list --repo linsalrob/contigger ...
+gh run view <relevant-run> ...
+gh run watch <relevant-run> ...
+gh api graphql ...
+gh api repos/linsalrob/contigger/actions/workflows
+gh api repos/linsalrob/contigger/actions/runs...
+```
+
+Treat `gh` failures caused by restricted sandbox networking separately from invalid, missing, or expired GitHub credentials.
+GitHub network failures inside a restricted sandbox may be retried with the environment's required network elevation.
+When network access is unavailable, report that authentication could not be verified from the sandbox; do not conclude that the user's credentials are invalid.
+
+
+When appropriate, retry `gh` outside the restricted sandbox or request network permission rather than asking the user to reauthenticate immediately.
+
+The GraphQL approval includes reading pull-request review threads and resolving a thread
+only after its actionable feedback has actually been addressed and the user has asked the
+agent to resolve outstanding review comments. Read-only Actions API calls must remain
+scoped to `linsalrob/contigger`. Posting `@codex review` is approved only for requesting a
+re-review of a pull request the user asked the agent to monitor.
+
+The following repository-local GitHub helper scripts have also been approved with Python
+3.11:
+
+```text
+python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-fix-ci/scripts/inspect_pr_checks.py ...
+python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-address-comments/scripts/fetch_comments.py ...
+```
+
+If the user has asked Codex to address PR review feedback, and a review thread
+has been addressed by the pushed change, Codex is pre-approved to mark that
+specific thread as resolved. Do not resolve informational, disputed, ambiguous,
+or unaddressed threads.
+
+## Node, npm, and npx commands approved
+
+When the repository already uses Node tooling, the following are approved for
+routine repository-scoped work:
+
+```text
+node --version
+npm --version
+npx --version
+npm test
+npm run <repository-defined-script>
+npm exec -- <repository-defined-tool> ...
+npx --yes <repository-defined-tool> ...
+```
+
+`npx` and `npm exec` are approved only when the tool is already declared in the
+repository configuration, lockfile, or documented project workflow, or when the
+user explicitly asks for that tool.
+
+`npx` and `npm exec` may use network access only when required to install or
+run the repository-declared tool, and only within the current task scope.
+
+These approvals do not authorize global package installation, major dependency
+upgrades, publishing packages, changing credentials, running unreviewed remote
+install scripts, or executing arbitrary packages unrelated to the task.
+
+
+## Read-only inspection commands approved
+
+Routine repository-scoped inspection is approved, including:
+
+```text
+rg ...
+rg --files ...
+sed -n ...
+find <repository-or-established-environment-path> ...
+ls ...
+wc ...
+column ...
+gzip -cd ...
+sha256sum ...
+```
+
+Reads of `~/.codex/AGENTS.md` and installed skill instructions are approved when needed to
+follow current agent policy. These approvals do not permit broad credential-directory
+reads, environment dumps, or output that exposes tokens or secrets.
+
+## File editing and publication boundaries
+
+- Repository edits explicitly requested by the user are approved through patch-style edits.
+- Stage only named files that belong to the requested change.
+- Temporary files under `/tmp` may be created for test outputs and pull-request bodies.
+- Local planning or approval files must remain untracked unless the user explicitly asks
+  for them to be committed.
+- Opening and updating a pull request is approved when explicitly requested.
+
 
 ### Local validation and inspection
 
@@ -218,6 +329,8 @@ Ask first unless the operation is clearly and explicitly authorized within the c
 - changing access controls, credentials, secrets, billing, or repository settings;
 - executing database migrations against shared or production systems;
 - broad destructive filesystem operations.
+- Never use `git reset --hard`, `git clean -fd`, force-push, rebase published history, or
+  broad recursive deletion under this standing approval.
 
 ## Validation
 
