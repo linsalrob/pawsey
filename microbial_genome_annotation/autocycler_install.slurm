@@ -14,6 +14,11 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 eval "$(mamba shell hook --shell bash)"
 #TMP=$(for i in {1..12}; do printf "%x" $((RANDOM % 16)); done)
 CONDAENV=autocycler
+if [[ -e /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV ]]; then
+    echo -e "Conda environment $CONDAENV already exists, removing it first\n"
+    mamba env remove --yes --prefix /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
+fi
+
 mamba env create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV -f  autocycler.yaml
 echo -e "autocycler installed in $CONDAENV\n\nmamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV"
 
