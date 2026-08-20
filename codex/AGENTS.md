@@ -178,7 +178,73 @@ For example:
 ```bash
 sbatch --wait run_vamb.slurm
 
-# After the job completes:
+### Slurm job arrays: do not throttle
+
+When submitting Slurm job arrays, submit the complete array without an
+artificial concurrency limit unless the user explicitly requests one or the
+cluster requires one.
+
+Prefer:
+
+    #SBATCH --array=1-1000
+
+rather than:
+
+    #SBATCH --array=1-1000%10
+
+Do not add `%N` array throttles merely to reduce scheduler load, be conservative,
+limit simultaneous jobs, or avoid using too many compute nodes.
+
+The Slurm scheduler is responsible for deciding how many array elements can run
+simultaneously based on:
+
+- available compute resources;
+- partition limits;
+- account and QOS limits;
+- scheduling priority;
+- fair-share policy;
+- per-user or per-account job limits;
+- node availability;
+- other site scheduler policies.
+
+Submitting the full array allows Slurm to start as many elements as the cluster
+can appropriately accommodate.
+
+If an existing submission script contains an array throttle such as:
+
+    #SBATCH --array=1-500%20
+
+and there is no documented scientific, technical, or cluster-policy reason for
+the throttle, Codex may remove the `%20` and submit:
+
+    #SBATCH --array=1-500
+
+without asking for additional permission.
+
+Likewise, when constructing an array dynamically, do not introduce a throttle:
+
+    sbatch --array=1-"$N" job.slurm
+
+rather than:
+
+    sbatch --array=1-"$N"%20 job.slurm
+
+Array throttling is appropriate only when there is a concrete reason outside
+ordinary scheduler resource management, for example:
+
+- the user explicitly requests a concurrency limit;
+- a cluster policy requires a particular limit;
+- jobs access an external service with a rate limit;
+- jobs contend for a shared resource that is not managed by Slurm;
+- excessive simultaneous filesystem or database access would cause a known
+  technical problem;
+- the workflow itself imposes a concurrency constraint.
+
+When such a constraint exists, document why the throttle is necessary rather
+than applying one by default.
+
+
+## After the job completes:
 cat logs/vamb.out
 cat logs/vamb.err
 ls -lh results/
@@ -196,7 +262,7 @@ After the job completes:
 
 Do not repeatedly poll `squeue` in a tight loop when `sbatch --wait` provides the required behaviour.
 
-### Jobs with predetermined downstream steps
+## Jobs with predetermined downstream steps
 
 If the next computational step is already known and does not require Codex to inspect or interpret the intermediate result, do not wait for each job individually.
 
