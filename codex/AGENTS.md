@@ -90,6 +90,431 @@ When a request depends on recency, including words such as “latest”, “curr
 - For HPC repositories, respect documented scheduler, module, filesystem, accelerator, and container conventions.
 - Do not assume Docker is appropriate on an HPC system when Apptainer/Singularity, environment modules, or a scheduler-native workflow is established.
 
+## Slurm and HPC scheduler access
+
+When working on a Slurm-managed HPC system, Codex is explicitly authorised to operate the scheduler autonomously when doing so is relevant to the current task.
+
+The user has pre-approved routine Slurm job lifecycle operations. Codex does **not** need to ask for additional permission before submitting jobs, monitoring them, inspecting their state or logs, diagnosing failures, modifying the execution strategy, resubmitting jobs, or cancelling jobs that belong to the current task.
+
+### Pre-approved Slurm commands
+
+The following command families may be used without additional approval:
+
+```text
+sbatch ...
+srun ...
+salloc ...
+
+squeue ...
+sacct ...
+sstat ...
+sinfo ...
+sprio ...
+sshare ...
+
+scontrol show ...
+scontrol update ...
+scontrol hold ...
+scontrol release ...
+scontrol requeue ...
+
+scancel <in-scope-job-id> ...
+
+sacctmgr show ...
+```
+
+Equivalent scheduler-inspection commands, site-specific Slurm wrappers, and repository-provided job submission or monitoring scripts are also approved when they are relevant to the task.
+
+Read-only inspection of scheduler configuration is approved, including commands such as:
+
+```text
+scontrol show config
+scontrol show partition
+scontrol show node
+scontrol show job <job-id>
+scontrol show reservation
+```
+
+Do not modify cluster-wide Slurm configuration, reservations, accounts, associations, QOS definitions, nodes, partitions, or other administrative scheduler state unless the user explicitly requests that administrative action.
+
+### Autonomous job submission
+
+Codex may autonomously:
+
+* create and edit Slurm submission scripts;
+* choose appropriate partitions, accounts, QOS settings, walltimes, memory, CPU counts, GPU counts, constraints, and other resource requests based on the task and available cluster configuration;
+* inspect `sinfo`, existing project scripts, documentation, previous jobs, and scheduler state to determine appropriate resource requests;
+* submit individual jobs and job arrays;
+* create job dependencies using `--dependency`;
+* submit preprocessing, analysis, validation, aggregation, and post-processing jobs;
+* use `srun` within allocations when appropriate;
+* submit additional jobs in response to results from earlier jobs;
+* resubmit failed or incomplete jobs after diagnosing and correcting the cause;
+* adjust requested time, memory, CPUs, GPUs, partitions, array sizes, or related Slurm parameters when evidence indicates that the original request was inappropriate;
+* use scheduler-native parallelism rather than launching uncontrolled processes on login nodes.
+
+Submitting jobs is considered a normal execution action, not an external deployment or production operation.
+
+### Jobs requiring Codex analysis after completion
+
+If subsequent work depends on Codex inspecting, interpreting, validating, or reasoning about the output of a Slurm job, submit the job using:
+
+```bash
+sbatch --wait job.slurm
+```
+
+The `--wait` option causes `sbatch` to remain attached until the Slurm job reaches a terminal state.
+
+Use this pattern when the workflow is:
+
+1. submit a computational job;
+2. wait for it to finish;
+3. inspect stdout, stderr, exit status, and generated files;
+4. interpret the scientific or computational result;
+5. decide what analysis should happen next.
+
+For example:
+
+```bash
+sbatch --wait run_vamb.slurm
+
+# After the job completes:
+cat logs/vamb.out
+cat logs/vamb.err
+ls -lh results/
+```
+
+Long queueing and execution times are normal on the cluster. Do not treat a long-running `sbatch --wait` command as a failure merely because it takes substantial time to return.
+
+After the job completes:
+
+- inspect the Slurm stdout and stderr files;
+- inspect the expected output files;
+- verify that the job actually completed successfully;
+- continue the analysis without waiting for additional user instruction if the next step follows naturally from the scientific objective;
+- if the job failed, diagnose the failure, modify the job or analysis as appropriate, and resubmit it.
+
+Do not repeatedly poll `squeue` in a tight loop when `sbatch --wait` provides the required behaviour.
+
+### Jobs with predetermined downstream steps
+
+If the next computational step is already known and does not require Codex to inspect or interpret the intermediate result, do not wait for each job individually.
+
+Instead, capture the Slurm job ID using:
+
+```bash
+job1=$(sbatch --parsable job1.slurm)
+```
+
+Then submit downstream jobs using Slurm dependencies.
+
+For example:
+
+```bash
+job1=$(sbatch --parsable assemble.slurm)
+
+job2=$(sbatch --parsable \
+    --dependency=afterok:$job1 \
+    map_reads.slurm)
+
+job3=$(sbatch --parsable \
+    --dependency=afterok:$job2 \
+    analyse_mapping.slurm)
+
+echo "Submitted pipeline:"
+echo "  assembly: $job1"
+echo "  mapping:  $job2"
+echo "  analysis: $job3"
+```
+
+Prefer:
+
+```bash
+--dependency=afterok:$jobid
+```
+
+when the downstream job should run only if the preceding job completed successfully.
+
+Use other Slurm dependency types only when their semantics are intentionally required.
+
+### Choosing between `--wait` and `--parsable`
+
+Use:
+
+```bash
+sbatch --wait job.slurm
+```
+
+when Codex must regain control after the job and examine its output before deciding what to do next.
+
+Use:
+
+```bash
+jobid=$(sbatch --parsable job.slurm)
+```
+
+when the workflow after that job is already known and can be expressed as Slurm job dependencies.
+
+As a general rule:
+
+```text
+Does Codex need to inspect the result before deciding the next step?
+
+    YES  -> sbatch --wait
+    NO   -> sbatch --parsable + Slurm dependencies
+```
+
+Prefer Slurm dependencies for deterministic computational pipelines and reserve Codex intervention for points where interpretation, validation, troubleshooting, or scientific decision-making is required.
+
+### Mixed workflows
+
+A workflow may combine both approaches.
+
+For example, several deterministic preprocessing steps can be chained using dependencies, followed by a final job that Codex waits for:
+
+```bash
+job1=$(sbatch --parsable preprocess.slurm)
+
+job2=$(sbatch --parsable \
+    --dependency=afterok:$job1 \
+    assemble.slurm)
+
+sbatch --wait \
+    --dependency=afterok:$job2 \
+    summarise.slurm
+```
+
+After `summarise.slurm` completes, inspect its outputs and determine the next analysis based on the results.
+
+This is preferred over making Codex wait unnecessarily between deterministic stages.
+
+### General Slurm behaviour
+
+- Never run substantial compute workloads directly on login nodes.
+- Record submitted job IDs where they may be useful for diagnostics.
+- Use Slurm dependencies rather than manually waiting between jobs whose relationship is known in advance.
+- Use `sbatch --wait` when Codex itself is the decision point between stages.
+- Do not abandon an analysis merely because a Slurm job spends a long time queued or running.
+- When a job fails, inspect its state, stdout, stderr, resource usage, and exit code before deciding how to proceed.
+- Avoid rapid repeated calls to `squeue`, `sacct`, or other Slurm controller commands.
+- Continue autonomously through routine computational steps where doing so is safe and consistent with the scientific objective.
+
+
+### Monitoring jobs to completion
+
+When a task requires results from Slurm jobs, Codex is authorised and expected to monitor those jobs until they reach the state necessary to continue the task.
+
+Codex may repeatedly inspect:
+
+```text
+squeue
+sacct
+sstat
+scontrol show job
+```
+
+and may inspect job stdout/stderr, application logs, output files, accounting information, and resource utilisation while jobs execute.
+
+Monitoring may continue across long-running jobs. Prefer bounded polling intervals rather than tight loops. For example, polling scheduler state every 30–120 seconds is reasonable for ordinary jobs, with longer intervals for long-running workloads.
+
+Do not abandon an analysis merely because the submitted computation does not finish immediately. If completion of an in-scope job is required for the requested task, continue monitoring it and proceed with downstream analysis when it finishes.
+
+When useful, Codex may use commands such as:
+
+```bash
+while squeue -h -j "$jobid" | grep -q .; do
+    sleep 60
+done
+```
+
+or equivalent bounded monitoring mechanisms.
+
+For job arrays, Codex may monitor individual array elements, identify failed elements, and selectively resubmit or requeue them.
+
+### Diagnosing and recovering failed jobs
+
+Codex may autonomously investigate jobs in states including:
+
+```text
+FAILED
+CANCELLED
+TIMEOUT
+OUT_OF_MEMORY
+NODE_FAIL
+PREEMPTED
+BOOT_FAIL
+DEADLINE
+REVOKED
+SPECIAL_EXIT
+```
+
+as well as jobs that remain pending unexpectedly.
+
+Diagnosis may include:
+
+* reading stdout and stderr;
+* inspecting `sacct` exit codes and state;
+* inspecting `scontrol show job`;
+* examining `ReqMem`, `MaxRSS`, elapsed time, CPU utilisation, GPU utilisation, and related accounting information;
+* determining why a job is pending;
+* checking partition, QOS, reservation, dependency, account, node, or resource constraints;
+* checking application logs and intermediate outputs;
+* running small diagnostic or test jobs.
+
+After identifying a likely cause, Codex may make an in-scope correction and resubmit the job without requesting permission.
+
+Examples include:
+
+* increasing memory after an out-of-memory failure;
+* increasing walltime after a timeout;
+* reducing memory or CPU requests when excessive requests prevent scheduling;
+* changing to an appropriate partition;
+* correcting malformed Slurm directives;
+* correcting command-line arguments or environment setup;
+* repairing job dependencies;
+* splitting workloads into arrays;
+* changing array concurrency;
+* retrying jobs affected by transient node or filesystem failures.
+
+Prefer evidence-based adjustments rather than repeatedly increasing resources without diagnosis.
+
+### Cancelling, holding, releasing, and requeuing jobs
+
+Codex may use:
+
+```text
+scancel
+scontrol hold
+scontrol release
+scontrol requeue
+```
+
+without additional permission for jobs that were submitted as part of the current task or are otherwise clearly identified as belonging to the current task.
+
+This includes cancelling jobs that:
+
+* are known to be incorrect;
+* are superseded by a corrected submission;
+* are wasting resources because of an identified error;
+* are stuck or no longer needed;
+* must be replaced with different resource requests.
+
+Do **not** cancel, hold, release, requeue, or otherwise alter unrelated jobs belonging to the user or other users.
+
+Avoid broad commands such as:
+
+```text
+scancel -u "$USER"
+scancel --state=PENDING
+```
+
+unless the user explicitly requests that broader action and its scope is clear.
+
+### Job arrays and dependencies
+
+Codex is authorised to use Slurm arrays and dependency graphs where they improve efficiency or correctness.
+
+This includes:
+
+```text
+--array=...
+--dependency=afterok:...
+--dependency=afterany:...
+--dependency=afternotok:...
+--dependency=singleton
+```
+
+Codex may determine sensible array concurrency limits based on cluster policy, dataset size, available resources, and existing scheduler load.
+
+Where one computation produces input required by another, prefer scheduler dependencies over manual waiting when practical.
+
+### Resource selection
+
+Before launching substantial workloads, inspect enough of the environment to make a reasonable resource request.
+
+Relevant inspection may include:
+
+```text
+sinfo
+squeue
+sacct
+scontrol show partition
+scontrol show node
+module avail
+module list
+nvidia-smi
+rocm-smi
+```
+
+as applicable to the system.
+
+Use existing project or cluster conventions where available.
+
+Derive application thread counts from Slurm allocations where possible, for example:
+
+```bash
+$SLURM_CPUS_PER_TASK
+$SLURM_CPUS_ON_NODE
+```
+
+Do not spawn computational workloads on login/head nodes when those workloads should run through Slurm.
+
+Small filesystem inspection, script preparation, metadata processing, compilation where locally appropriate, scheduler inspection, and similar lightweight operations may be performed on the login node subject to site policy.
+
+### Compute-budget autonomy
+
+When the user's requested scientific or computational objective inherently requires HPC computation, submission of proportionate Slurm workloads is considered explicitly authorised by this file.
+
+Codex may therefore consume the CPU, memory, GPU, filesystem, and scheduler resources reasonably necessary to complete the task without requesting separate approval for each job.
+
+However:
+
+* use resources proportionately to the scientific or computational objective;
+* prefer a small representative test before launching a very large workflow when feasible;
+* avoid obviously wasteful duplicate computation;
+* reuse valid existing outputs where appropriate;
+* respect project allocations, storage quotas, scheduler limits, and site policies;
+* do not intentionally monopolise shared resources;
+* do not submit unrelated speculative workloads merely because capacity is available.
+
+If a workflow would represent an extraordinary escalation beyond the apparent scope of the task—for example, consuming essentially an entire allocation, launching an exceptionally large multi-day campaign, or creating significant external financial cost—ask first unless the user has explicitly requested that scale of computation.
+
+### Long-running task continuity
+
+Slurm jobs are often asynchronous. A submitted job should not be treated as completion of the task when its output is required for subsequent work.
+
+For an active task, Codex should normally follow the full lifecycle:
+
+```text
+inspect inputs
+→ prepare workflow
+→ submit job
+→ record job ID
+→ monitor scheduler
+→ inspect logs/results
+→ diagnose failures if any
+→ resubmit/requeue if necessary
+→ validate completed outputs
+→ perform downstream analysis
+→ report results
+```
+
+Record important job IDs, parameters, output paths, failures, and recovery decisions in `.agent/CONTINUITY.md` when the work is substantial enough to require continuity tracking.
+
+### Reporting
+
+In the final response, report material scheduler activity concisely, including:
+
+* important jobs or arrays submitted;
+* whether they completed successfully;
+* meaningful failures and corrections;
+* relevant resource or performance observations;
+* output locations;
+* any jobs deliberately left running, if applicable.
+
+Raw scheduler polling output does not need to be reproduced unless it is relevant to understanding a problem or result.
+
+
 ## Dependencies
 
 - Prefer existing dependencies and standard-library functionality.
@@ -100,6 +525,9 @@ When a request depends on recency, including words such as “latest”, “curr
 - Avoid major-version upgrades or broad dependency refreshes unless requested.
 - Avoid replacing one dependency ecosystem with another without explicit justification.
 - Explain newly added runtime dependencies in the final summary.
+- Seaborn is a pre-approved dependency for Python scientific visualisation and
+  may be installed temporarily into an isolated environment whenever required
+  for an in-scope analysis.
 
 ## Editing files
 
@@ -342,8 +770,13 @@ Ask first unless the operation is clearly and explicitly authorized within the c
 - Report skipped checks and why they were skipped.
 - Address errors and warnings introduced by the change.
 - Distinguish pre-existing failures from failures caused by the change.
-- Avoid running unusually expensive integration, benchmark, GPU, cluster, full-dataset, or external-service workflows unless requested or clearly necessary.
-- Do not consume substantial cloud, HPC, accelerator, or paid resources without explicit justification.
+- Avoid unusually expensive integration, benchmark, GPU, cluster, full-dataset,
+  or external-service workflows unless requested, clearly necessary to accomplish
+  the task, or authorised by the Slurm/HPC section.
+- HPC and accelerator resources used through the documented Slurm workflow are
+  pre-authorised when proportionate to the requested task. Substantial paid cloud
+  resources or extraordinary HPC expenditure still require explicit justification
+  or user authorisation.
 
 ## Reading documents and data
 
@@ -369,6 +802,65 @@ Ask first unless the operation is clearly and explicitly authorized within the c
 - When parallelising, respect scheduler allocations and derive thread or process counts from the execution environment where appropriate.
 - On shared systems, avoid uncontrolled parallelism, excessive temporary storage, or unnecessary duplicate data.
 - Report assumptions affecting biological, statistical, or computational interpretation.
+
+### Python figures and visualisation
+
+When creating scientific figures or exploratory visualisations in Python, use
+**Seaborn as the default plotting library**, with Matplotlib underneath where
+needed for lower-level control.
+
+- Prefer Seaborn for statistical plots, distributions, categorical plots,
+  regression plots, heatmaps, and general publication-quality scientific
+  visualisation.
+- Use Matplotlib directly when Seaborn does not provide the required plot type
+  or when precise low-level figure control is necessary.
+- Prefer clear, publication-quality figures with:
+  - readable axis labels and units;
+  - appropriate legends;
+  - sensible figure dimensions;
+  - consistent typography;
+  - colour palettes that remain interpretable and, where practical,
+    colour-blind accessible;
+  - minimal unnecessary visual clutter.
+- Do not use arbitrary or decorative styling when a simpler scientific
+  presentation communicates the result more clearly.
+- Save figures at appropriate resolution and in formats suitable for the
+  requested use. Prefer vector formats such as PDF or SVG for line art and
+  plots when practical, and high-resolution PNG for raster output.
+
+If Seaborn is not installed, Codex is explicitly authorised to install it
+temporarily without asking for additional permission.
+
+Prefer installation into the currently active project, Conda, virtualenv, or
+other isolated Python environment, for example:
+
+    python -m pip install seaborn
+
+or, when using Conda/Mamba:
+
+    mamba install seaborn
+
+Do not install Seaborn system-wide or modify the host operating system merely
+to create a figure.
+
+If no suitable Python environment exists, Codex may create a temporary isolated
+environment, install Seaborn and its required plotting dependencies there, and
+use that environment for the analysis. Temporary environments need not be
+committed to the repository.
+
+Installing Seaborn for an in-scope analysis is considered a routine,
+pre-approved dependency action and does not require separate user approval.
+
+When writing reusable analysis scripts or notebooks, import Seaborn explicitly,
+normally as:
+
+    import seaborn as sns
+
+and use Seaborn by default unless there is a technical or scientific reason to
+choose another visualisation library.
+
+
+
 
 ## Secrets and sensitive data
 
