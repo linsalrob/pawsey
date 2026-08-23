@@ -96,6 +96,12 @@ When working on a Slurm-managed HPC system, Codex is explicitly authorised to op
 
 The user has pre-approved routine Slurm job lifecycle operations. Codex does **not** need to ask for additional permission before submitting jobs, monitoring them, inspecting their state or logs, diagnosing failures, modifying the execution strategy, resubmitting jobs, or cancelling jobs that belong to the current task.
 
+### Accounts
+
+The default account is defined in the environment variable $PAWSEY_PROJECT. Use that account for all standard Slurm submissions unless the user explicitly requests a different account.
+
+For submissions to the GPU queue, please use ${PAWSEY_PROJECT}-gpu as the account unless the user explicitly requests a different account.
+
 ### Pre-approved Slurm commands
 
 The following command families may be used without additional approval:
@@ -638,6 +644,30 @@ Raw scheduler polling output does not need to be reproduced unless it is relevan
 - Use dry-run or preview modes when supported and materially useful.
 - Report the exact remote write actions performed.
 
+## ChatGPT collaboration
+
+ChatGPT is used as a higher-level scientific and strategic collaborator.
+
+When a task reaches a point where scientific interpretation, strategic
+direction, literature knowledge, or a consequential analytical choice
+would materially benefit from ChatGPT input:
+
+1. Do not stop unnecessarily if there is an obvious safe next step.
+2. Summarize the current state clearly.
+3. Record:
+   - the objective;
+   - work completed;
+   - important findings;
+   - relevant commits/files/results;
+   - the decision or question;
+   - your recommended answer or next step.
+4. Post this as a comment to the project's coordination GitHub issue,
+   prefixed `CODEX → CHATGPT`.
+5. Continue any independent work that does not depend on the answer.
+
+When a comment prefixed `CHATGPT → CODEX` is provided, treat it as
+high-level guidance, reconcile it with the repository state and
+AGENTS.md, and continue the work.
 
 ## Pre-approved routine commands
 
