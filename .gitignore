@@ -1,3 +1,6 @@
+# Generated per-agent AGENTS.md builds (run agents/build.sh to recreate)
+agents/generated/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -4,9 +4,40 @@ Global working agreements shared by every CLI coding agent in use on this system
 
 ## Scope and provenance
 
-This file lives at `AGENTS.md` in the `pawsey` repository (`GitHubs/pawsey/agents/AGENTS.md`) and is symlinked into each agent's home directory (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, and so on) so that every agent reads the same policy from one canonical source. Skills referenced here (e.g. `ask-chatgpt`, `ask-claude`) live alongside it under `skills/` and are symlinked the same way.
+This is the **shared base**: policy that applies to every CLI coding agent
+identically (cluster/Slurm conventions, git safety, dependency and editing
+rules, secrets, continuity, definition of done). It lives at
+`GitHubs/pawsey/agents/AGENTS.md`.
 
-Wherever this file says **the agent**, it means whichever CLI coding agent is currently executing — Codex CLI, Claude Code, or another agent added later. Nothing here should be read as applying only to Codex unless a passage explicitly says so (a few Codex-CLI-specific tooling paths are called out as such where they occur).
+Agent-specific behaviour lives in separate overlay files next to this one:
+
+```text
+GitHubs/pawsey/agents/
+  AGENTS.md          <- this file: shared base
+  AGENTS.codex.md     <- Codex CLI overlay
+  AGENTS.claude.md    <- Claude Code overlay
+  build.sh            <- concatenates base + each overlay into generated/
+  generated/
+    AGENTS.codex.md   <- base + AGENTS.codex.md  (symlinked from ~/.codex/AGENTS.md)
+    CLAUDE.md          <- base + AGENTS.claude.md (symlinked from ~/.claude/CLAUDE.md)
+```
+
+Codex CLI auto-loads `~/.codex/AGENTS.md`. Claude Code auto-loads
+`~/.claude/CLAUDE.md`, **not** `AGENTS.md` — that's why the generated file
+for Claude is named `CLAUDE.md` rather than `AGENTS.md`. Both generated files
+are the shared base with that agent's overlay appended, so each agent gets
+the full picture in one file without having to dereference anything itself.
+
+Whenever this file or an overlay is edited, run `GitHubs/pawsey/agents/build.sh`
+to regenerate `generated/` before the change takes effect in either agent's
+next session. `~/.claude/AGENTS.md` still symlinks to this shared base
+directly (not generated) as a plain-policy reference; it is not what Claude
+Code auto-loads.
+
+Wherever this file says **the agent**, it means whichever CLI coding agent is
+currently executing — Codex CLI, Claude Code, or another agent added later
+with its own `AGENTS.<name>.md` overlay. Content specific to one agent
+belongs in that agent's overlay, not here.
 
 ## Instruction precedence
 
@@ -810,16 +841,10 @@ agent to resolve outstanding review comments. Read-only Actions API calls must r
 scoped to `linsalrob/contigger`. Posting `@codex review` is approved only for requesting a
 re-review of a pull request the user asked the agent to monitor.
 
-The following repository-local GitHub helper scripts have also been approved with Python
-3.11, when running under Codex CLI, which provides them via its own plugin cache:
-
-```text
-python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-fix-ci/scripts/inspect_pr_checks.py ...
-python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-address-comments/scripts/fetch_comments.py ...
-```
-
-This specific path is Codex-CLI-specific tooling, not a general convention. Other agents
-should use their own equivalent bundled helper scripts, if any, in the same approved manner.
+Some agents bundle their own repository-local GitHub helper scripts (for example, Codex
+CLI's plugin-cache `gh-fix-ci` / `gh-address-comments` scripts). See that agent's overlay
+(`AGENTS.codex.md`, etc.) for the approved paths — this is agent-specific tooling, not a
+general convention, so it isn't listed here.
 
 If the user has asked the agent to address PR review feedback, and a review thread
 has been addressed by the pushed change, the agent is pre-approved to mark that
