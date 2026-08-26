@@ -1,23 +1,31 @@
 ---
-name: ask-chatgpt
+name: ask-claude
 description: >
   Hand a question, interpretation, or decision from the active CLI agent
-  session (Codex, Claude Code, or another agent) to ChatGPT through GitHub.
-  Trigger whenever the user says "Ask ChatGPT", "ask ChatGPT", "Ask Chatty",
-  "ask Chatty", "let's ask ChatGPT", or explicitly invokes $ask-chatgpt — AND
-  whenever the agent itself judges, per AGENTS.md's External AI collaboration
-  policy, that a consequential scientific, strategic, or design decision would
-  materially benefit from ChatGPT's input, even without being asked. Works
-  both inside GitHub repositories and in non-Git scientific/vibe-analysis
-  workspaces. Creates a durable GitHub issue, optionally creates a compact
-  evidence bundle in linsalrob/chatgpt-handoffs, and ends with a prompt the
-  user can paste directly into ChatGPT.
+  session (Codex, Claude Code, or another agent) to Claude (claude.ai) through
+  GitHub. Mirrors the ask-chatgpt skill exactly, but targets Claude instead of
+  ChatGPT — use this one when the user specifically wants Claude's opinion,
+  not ChatGPT's. Trigger whenever the user says "Ask Claude", "ask Claude",
+  "let's ask Claude", or explicitly invokes $ask-claude — AND whenever the
+  agent itself judges, per AGENTS.md's External AI collaboration policy, that
+  a consequential scientific, strategic, or design decision would materially
+  benefit from Claude's input, even without being asked. Works both inside
+  GitHub repositories and in non-Git scientific/vibe-analysis workspaces.
+  Creates a durable GitHub issue, optionally creates a compact evidence bundle
+  in linsalrob/claude-handoffs, and ends with a prompt the user can paste
+  directly into Claude — clearly labelled so it is not confused with the
+  ask-chatgpt skill's ChatGPT-bound prompt.
 ---
 
-# Ask ChatGPT
+# Ask Claude
 
 Create a durable, two-way handoff from the current CLI agent session to
-ChatGPT.
+Claude (claude.ai).
+
+This is the mirror image of the `ask-chatgpt` skill: same workflow, same
+handoff mechanics, different destination model and different shared
+repository. If you are looking for the ChatGPT version, use `ask-chatgpt`
+instead — do not confuse the two.
 
 This skill runs the same way regardless of which CLI agent invokes it. Before
 anything else, fix `<AGENT>` for the rest of this workflow:
@@ -30,9 +38,17 @@ Use `<AGENT>` (and its all-caps form, e.g. `CODEX`, `CLAUDE`, for headings)
 consistently everywhere below. Never leave the literal placeholder text
 `<AGENT>` in real output — always substitute the actual name.
 
+**Note when `<AGENT>` is itself `Claude`** (i.e. this is a Claude Code
+session): consulting a separate Claude conversation from inside Claude Code
+is still useful — fresh context, no priming from this session's history — but
+it is not an independent second model. When the goal is a genuinely
+independent second opinion rather than a fresh, unprimed pass, prefer
+`ask-chatgpt` instead. Use judgement; either is legitimate depending on what
+the user actually needs.
+
 The user should be able to say:
 
-    Ask ChatGPT <question>
+    Ask Claude <question>
 
 from essentially any session, whether or not the working directory is a Git
 repository. The agent may also start this workflow entirely on its own —
@@ -41,33 +57,36 @@ see "Autonomous invocation" below.
 The workflow must:
 
 1. understand the question in the context of the active session;
-2. gather the minimum context and evidence ChatGPT needs;
+2. gather the minimum context and evidence Claude needs;
 3. create a GitHub issue;
 4. when useful, create a small shared evidence bundle in
-   `linsalrob/chatgpt-handoffs`;
-5. explicitly instruct ChatGPT to finish with a paste-back prompt for
+   `linsalrob/claude-handoffs`;
+5. explicitly instruct Claude to finish with a paste-back prompt for
    `<AGENT>`;
-6. end the response with a short prompt the user can paste into ChatGPT.
+6. end the response with a short prompt the user can paste into Claude —
+   clearly labelled as being for Claude, not ChatGPT.
 
 ## Trigger
 
 Run this workflow whenever the user says phrases such as:
 
-- `Ask ChatGPT`
-- `Ask Chatty`
-- `Ask ChatGPT whether ...`
-- `Ask Chatty what she thinks about ...`
-- `Let's ask ChatGPT ...`
-- `$ask-chatgpt ...`
+- `Ask Claude`
+- `Ask Claude whether ...`
+- `Let's ask Claude ...`
+- `$ask-claude ...`
 
-The text following the trigger is normally the question for ChatGPT.
+The text following the trigger is normally the question for Claude.
 
-If the user says only `Ask ChatGPT` or `Ask Chatty`, infer the question from the
-current task and the most recent unresolved scientific, strategic, design, or
+If the user says only `Ask Claude`, infer the question from the current task
+and the most recent unresolved scientific, strategic, design, or
 implementation decision.
 
 Do not ask the user to repeat context that is already available in the active
 session.
+
+Do not trigger this skill on a bare "Ask ChatGPT" / "Ask Chatty" phrase — that
+is `ask-chatgpt`'s trigger, not this one. If the user's intent is ambiguous
+between the two, ask which model they mean rather than guessing.
 
 ## Autonomous invocation
 
@@ -108,13 +127,13 @@ Create the handoff issue in the current project's issue tracker.
 Use repository files, commits, PRs, existing issues, and committed results as
 the primary context.
 
-A central evidence bundle in `linsalrob/chatgpt-handoffs` is optional in this
-mode. Create one only when material evidence needed by ChatGPT is local,
+A central evidence bundle in `linsalrob/claude-handoffs` is optional in this
+mode. Create one only when material evidence needed by Claude is local,
 untracked, inconvenient to add to the source repository, or better represented
 as a deliberately small snapshot.
 
 Do not commit unrelated local analysis outputs to the source repository merely
-to make them visible to ChatGPT.
+to make them visible to Claude.
 
 ### Mode B — non-Git or non-GitHub analysis workspace
 
@@ -122,7 +141,7 @@ Use this mode when the current workspace is not a usable GitHub-backed project.
 
 Create the handoff issue in:
 
-    linsalrob/chatgpt-handoffs
+    linsalrob/claude-handoffs
 
 Create a project-specific directory and a handoff evidence bundle there.
 
@@ -134,11 +153,11 @@ analysis rather than a code repository is the primary artifact.
 
 Repository:
 
-    linsalrob/chatgpt-handoffs
+    linsalrob/claude-handoffs
 
 Preferred local checkout:
 
-    ${CHATGPT_HANDOFF_DIR:-$HOME/.cache/chatgpt-handoffs}
+    ${CLAUDE_HANDOFF_DIR:-$HOME/.cache/claude-handoffs}
 
 If the checkout exists:
 
@@ -146,7 +165,7 @@ If the checkout exists:
 
 If it does not exist:
 
-    gh repo clone linsalrob/chatgpt-handoffs "$HANDOFF_DIR"
+    gh repo clone linsalrob/claude-handoffs "$HANDOFF_DIR"
 
 If the checkout cannot be updated safely because it has unrelated local
 changes, do not discard them. Inspect the state, preserve the changes, and use
@@ -162,9 +181,9 @@ slug when a shared evidence bundle is required.
 
 For Mode B, determine a concise stable project slug using this priority:
 
-1. an explicit `project_slug` in a local `CHATGPT_HANDOFF.md`;
+1. an explicit `project_slug` in a local `CLAUDE_HANDOFF.md`;
 2. an existing matching project under
-   `chatgpt-handoffs/projects/`;
+   `claude-handoffs/projects/`;
 3. the project name or title in `SCIENTIFIC_BRIEF.md`;
 4. the current working-directory basename.
 
@@ -203,7 +222,7 @@ consultations.
 `shared/` contains only small reusable project-level artifacts.
 
 `handoffs/<handoff-id>/` contains the evidence snapshot for one specific
-ChatGPT consultation.
+Claude consultation.
 
 Use a handoff ID such as:
 
@@ -219,7 +238,7 @@ self-contained handoff.
 Gather, where relevant:
 
 - the user's overall objective;
-- the exact question for ChatGPT;
+- the exact question for Claude;
 - what `<AGENT>` has already done;
 - important findings and negative results;
 - uncertainties and competing interpretations;
@@ -243,7 +262,7 @@ When files such as these exist, treat them as first-class handoff context:
     STATUS.md
     DECISIONS.md
     reports/scientific_report.md
-    CHATGPT_HANDOFF.md
+    CLAUDE_HANDOFF.md
 
 Read the relevant portions before constructing the handoff.
 
@@ -257,7 +276,7 @@ analysis workspace's durable scientific record.
 Create a shared evidence bundle when one or more of these are true:
 
 - the session is Mode B;
-- the question depends on local files ChatGPT cannot otherwise inspect;
+- the question depends on local files Claude cannot otherwise inspect;
 - a figure is central to the question;
 - a large result needs to be reduced to a small table or summary;
 - the relevant evidence is untracked and should not be committed to the source
@@ -269,7 +288,7 @@ repository context is sufficient.
 
 ## Evidence selection principle
 
-Create the **smallest evidence package that lets ChatGPT reason well about the
+Create the **smallest evidence package that lets Claude reason well about the
 question**.
 
 Prefer derived summaries over raw data.
@@ -333,10 +352,10 @@ When adding a figure:
 - where practical, include a small supporting data table or quantitative
   summary.
 
-Do not assume ChatGPT can always render every repository-hosted binary artifact.
-The handoff `README.md` must contain enough caption/summary information for
-ChatGPT to understand why the figure matters even if image rendering is
-unavailable.
+Do not assume Claude can always render every repository-hosted binary
+artifact. The handoff `README.md` must contain enough caption/summary
+information for Claude to understand why the figure matters even if image
+rendering is unavailable.
 
 ## Create or update PROJECT.md
 
@@ -385,7 +404,7 @@ The handoff README should contain:
 - local-only files that were not copied;
 - `<AGENT>`'s current assessment.
 
-Commit and push the evidence bundle to `linsalrob/chatgpt-handoffs` before
+Commit and push the evidence bundle to `linsalrob/claude-handoffs` before
 creating the issue so the issue can link to a stable committed location.
 
 Use a concise commit message such as:
@@ -398,18 +417,18 @@ Do not modify unrelated handoff projects.
 
 Create a concise, specific title:
 
-    [Ask ChatGPT] <specific question or decision>
+    [Ask Claude] <specific question or decision>
 
 Good:
 
-    [Ask ChatGPT] Interpret the Logan protein entropy results
-    [Ask ChatGPT] Choose SNP distances or embeddings for VijiPhage clustering
-    [Ask ChatGPT] Assess evidence for a Maltschvirus bacterial host
+    [Ask Claude] Interpret the Logan protein entropy results
+    [Ask Claude] Choose SNP distances or embeddings for VijiPhage clustering
+    [Ask Claude] Assess evidence for a Maltschvirus bacterial host
 
 Bad:
 
-    [Ask ChatGPT] Question
-    ChatGPT handoff
+    [Ask Claude] Question
+    Claude handoff
     Need advice
 
 ## Issue target
@@ -420,19 +439,19 @@ For Mode A:
 
 For Mode B:
 
-    linsalrob/chatgpt-handoffs
+    linsalrob/claude-handoffs
 
 If Mode A uses a shared evidence bundle, the project issue must link directly
-to the relevant path in `linsalrob/chatgpt-handoffs`.
+to the relevant path in `linsalrob/claude-handoffs`.
 
 ## Issue body
 
 Construct the issue body with this structure (substituting `<AGENT>`
 throughout, including its all-caps form where the template shows `AGENT`):
 
-    # <AGENT> → ChatGPT handoff
+    # <AGENT> → Claude handoff
 
-    ## Question for ChatGPT
+    ## Question for Claude
 
     <The exact question, clearly and prominently stated.>
 
@@ -453,7 +472,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
     Session type: scientific/data-analysis workspace
     Working directory: <path>
     Git repository: none or not used for this analysis
-    Shared project: linsalrob/chatgpt-handoffs/projects/<project>/
+    Shared project: linsalrob/claude-handoffs/projects/<project>/
 
     ## Important findings
 
@@ -467,24 +486,24 @@ throughout, including its all-caps form where the template shows `AGENT`):
     ## Relevant local or repository context
 
     <Relevant paths, commits, PRs, issues, analyses, commands, or local-only
-    files. Clearly identify anything ChatGPT cannot directly access.>
+    files. Clearly identify anything Claude cannot directly access.>
 
     ## <AGENT>'s current assessment
 
     <What <AGENT> thinks the answer or next step should be, and why. Be
     explicit about uncertainty.>
 
-    ## What I need from ChatGPT
+    ## What I need from Claude
 
     <The precise interpretation, critique, decision, plan, or recommendation
     required.>
 
-    ## Instructions for ChatGPT
+    ## Instructions for Claude
 
     This issue is a handoff from an active <AGENT> CLI session.
 
     Please inspect this issue first. Then inspect relevant repository context
-    and any linked supporting material in linsalrob/chatgpt-handoffs where that
+    and any linked supporting material in linsalrob/claude-handoffs where that
     would improve the answer.
 
     Answer the user's question directly. Be critical where appropriate, and
@@ -492,7 +511,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
 
     If you create a small durable text artifact that would materially help the
     continuing analysis, you may add it to the same handoff directory in
-    linsalrob/chatgpt-handoffs when GitHub write access is available. Do not
+    linsalrob/claude-handoffs when GitHub write access is available. Do not
     overwrite <AGENT>-created evidence. Do not modify the source project
     repository unless the user explicitly asked you to.
 
@@ -510,7 +529,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
     - preserve important constraints and caveats;
     - refer to this GitHub issue and the handoff directory where useful;
     - tell <AGENT> to inspect its current local state before acting;
-    - tell <AGENT> to pull the shared handoff repository first if ChatGPT
+    - tell <AGENT> to pull the shared handoff repository first if Claude
       added files there;
     - be operational rather than merely summarising the discussion.
 
@@ -544,10 +563,14 @@ After creating the issue, give the user the issue title and URL briefly.
 
 Then END THE RESPONSE with exactly this section:
 
-### PASTE INTO CHATTY
+### PASTE INTO CLAUDE
+
+*(Reminder: this is the `ask-claude` handoff. The block below is for a
+**Claude** conversation at claude.ai — not ChatGPT. If you meant to ask
+ChatGPT, use the `ask-chatgpt` skill instead.)*
 
 ```text
-Please read this <AGENT> → ChatGPT handoff issue:
+Please read this <AGENT> → Claude handoff issue:
 
 <ISSUE_URL>
 
@@ -555,7 +578,7 @@ This comes from my active <AGENT> CLI session. Please inspect the issue and any
 relevant repository context.
 
 If the issue links to supporting material in
-https://github.com/linsalrob/chatgpt-handoffs, inspect the relevant project and
+https://github.com/linsalrob/claude-handoffs, inspect the relevant project and
 handoff directory as part of the analysis.
 
 Please answer the question posed in the issue.
@@ -574,7 +597,7 @@ directly back into my existing <AGENT> session so it can continue the work.
 Substitute the real `<AGENT>` value (e.g. `Codex`, `CODEX`) everywhere it
 appears in that block — never leave the literal placeholder text.
 
-The `PASTE INTO CHATTY` block must always be the final content emitted by this
-skill.
+The `PASTE INTO CLAUDE` block, including the reminder line immediately above
+it, must always be the final content emitted by this skill.
 
 Do not put commentary after it.

@@ -1,6 +1,12 @@
-# Global Codex Guidance (`~/.codex/AGENTS.md`)
+# Shared Agent Guidance (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, ...)
 
-Global working agreements for Codex CLI. These instructions apply when no more specific repository or subdirectory guidance overrides them.
+Global working agreements shared by every CLI coding agent in use on this system — currently Codex CLI and Claude Code, and any future agent whose home directory is pointed at this file. These instructions apply when no more specific repository or subdirectory guidance overrides them.
+
+## Scope and provenance
+
+This file lives at `AGENTS.md` in the `pawsey` repository (`GitHubs/pawsey/codex/AGENTS.md`) and is symlinked into each agent's home directory (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, and so on) so that every agent reads the same policy from one canonical source. Skills referenced here (e.g. `ask-chatgpt`, `ask-claude`) live alongside it under `skills/` and are symlinked the same way.
+
+Wherever this file says **the agent**, it means whichever CLI coding agent is currently executing — Codex CLI, Claude Code, or another agent added later. Nothing here should be read as applying only to Codex unless a passage explicitly says so (a few Codex-CLI-specific tooling paths are called out as such where they occur).
 
 ## Instruction precedence
 
@@ -92,9 +98,9 @@ When a request depends on recency, including words such as “latest”, “curr
 
 ## Slurm and HPC scheduler access
 
-When working on a Slurm-managed HPC system, Codex is explicitly authorised to operate the scheduler autonomously when doing so is relevant to the current task.
+When working on a Slurm-managed HPC system, the agent is explicitly authorised to operate the scheduler autonomously when doing so is relevant to the current task.
 
-The user has pre-approved routine Slurm job lifecycle operations. Codex does **not** need to ask for additional permission before submitting jobs, monitoring them, inspecting their state or logs, diagnosing failures, modifying the execution strategy, resubmitting jobs, or cancelling jobs that belong to the current task.
+The user has pre-approved routine Slurm job lifecycle operations. The agent does **not** need to ask for additional permission before submitting jobs, monitoring them, inspecting their state or logs, diagnosing failures, modifying the execution strategy, resubmitting jobs, or cancelling jobs that belong to the current task.
 
 ### Accounts
 
@@ -176,7 +182,7 @@ If an allocation omits the required task count, Slurm may reserve the GPUs and m
 
 ### Autonomous job submission
 
-Codex may autonomously:
+The agent may autonomously:
 
 * create and edit Slurm submission scripts;
 * choose appropriate partitions, accounts, QOS settings, walltimes, memory, CPU counts, GPU counts, constraints, and other resource requests based on the task and available cluster configuration;
@@ -192,9 +198,9 @@ Codex may autonomously:
 
 Submitting jobs is considered a normal execution action, not an external deployment or production operation.
 
-### Jobs requiring Codex analysis after completion
+### Jobs requiring agent analysis after completion
 
-If subsequent work depends on Codex inspecting, interpreting, validating, or reasoning about the output of a Slurm job, submit the job using:
+If subsequent work depends on the agent inspecting, interpreting, validating, or reasoning about the output of a Slurm job, submit the job using:
 
 ```bash
 sbatch --wait job.slurm
@@ -252,7 +258,7 @@ If an existing submission script contains an array throttle such as:
     #SBATCH --array=1-500%20
 
 and there is no documented scientific, technical, or cluster-policy reason for
-the throttle, Codex may remove the `%20` and submit:
+the throttle, the agent may remove the `%20` and submit:
 
     #SBATCH --array=1-500
 
@@ -301,7 +307,7 @@ Do not repeatedly poll `squeue` in a tight loop when `sbatch --wait` provides th
 
 ## Jobs with predetermined downstream steps
 
-If the next computational step is already known and does not require Codex to inspect or interpret the intermediate result, do not wait for each job individually.
+If the next computational step is already known and does not require the agent to inspect or interpret the intermediate result, do not wait for each job individually.
 
 Instead, capture the Slurm job ID using:
 
@@ -348,7 +354,7 @@ Use:
 sbatch --wait job.slurm
 ```
 
-when Codex must regain control after the job and examine its output before deciding what to do next.
+when the agent must regain control after the job and examine its output before deciding what to do next.
 
 Use:
 
@@ -361,19 +367,19 @@ when the workflow after that job is already known and can be expressed as Slurm 
 As a general rule:
 
 ```text
-Does Codex need to inspect the result before deciding the next step?
+Does the agent need to inspect the result before deciding the next step?
 
     YES  -> sbatch --wait
     NO   -> sbatch --parsable + Slurm dependencies
 ```
 
-Prefer Slurm dependencies for deterministic computational pipelines and reserve Codex intervention for points where interpretation, validation, troubleshooting, or scientific decision-making is required.
+Prefer Slurm dependencies for deterministic computational pipelines and reserve agent intervention for points where interpretation, validation, troubleshooting, or scientific decision-making is required.
 
 ### Mixed workflows
 
 A workflow may combine both approaches.
 
-For example, several deterministic preprocessing steps can be chained using dependencies, followed by a final job that Codex waits for:
+For example, several deterministic preprocessing steps can be chained using dependencies, followed by a final job that the agent waits for:
 
 ```bash
 job1=$(sbatch --parsable preprocess.slurm)
@@ -389,14 +395,14 @@ sbatch --wait \
 
 After `summarise.slurm` completes, inspect its outputs and determine the next analysis based on the results.
 
-This is preferred over making Codex wait unnecessarily between deterministic stages.
+This is preferred over making the agent wait unnecessarily between deterministic stages.
 
 ### General Slurm behaviour
 
 - Never run substantial compute workloads directly on login nodes.
 - Record submitted job IDs where they may be useful for diagnostics.
 - Use Slurm dependencies rather than manually waiting between jobs whose relationship is known in advance.
-- Use `sbatch --wait` when Codex itself is the decision point between stages.
+- Use `sbatch --wait` when the agent itself is the decision point between stages.
 - Do not abandon an analysis merely because a Slurm job spends a long time queued or running.
 - When a job fails, inspect its state, stdout, stderr, resource usage, and exit code before deciding how to proceed.
 - Avoid rapid repeated calls to `squeue`, `sacct`, or other Slurm controller commands.
@@ -405,9 +411,9 @@ This is preferred over making Codex wait unnecessarily between deterministic sta
 
 ### Monitoring jobs to completion
 
-When a task requires results from Slurm jobs, Codex is authorised and expected to monitor those jobs until they reach the state necessary to continue the task.
+When a task requires results from Slurm jobs, the agent is authorised and expected to monitor those jobs until they reach the state necessary to continue the task.
 
-Codex may repeatedly inspect:
+The agent may repeatedly inspect:
 
 ```text
 squeue
@@ -422,7 +428,7 @@ Monitoring may continue across long-running jobs. Prefer bounded polling interva
 
 Do not abandon an analysis merely because the submitted computation does not finish immediately. If completion of an in-scope job is required for the requested task, continue monitoring it and proceed with downstream analysis when it finishes.
 
-When useful, Codex may use commands such as:
+When useful, the agent may use commands such as:
 
 ```bash
 while squeue -h -j "$jobid" | grep -q .; do
@@ -432,11 +438,11 @@ done
 
 or equivalent bounded monitoring mechanisms.
 
-For job arrays, Codex may monitor individual array elements, identify failed elements, and selectively resubmit or requeue them.
+For job arrays, the agent may monitor individual array elements, identify failed elements, and selectively resubmit or requeue them.
 
 ### Diagnosing and recovering failed jobs
 
-Codex may autonomously investigate jobs in states including:
+The agent may autonomously investigate jobs in states including:
 
 ```text
 FAILED
@@ -464,7 +470,7 @@ Diagnosis may include:
 * checking application logs and intermediate outputs;
 * running small diagnostic or test jobs.
 
-After identifying a likely cause, Codex may make an in-scope correction and resubmit the job without requesting permission.
+After identifying a likely cause, the agent may make an in-scope correction and resubmit the job without requesting permission.
 
 Examples include:
 
@@ -483,7 +489,7 @@ Prefer evidence-based adjustments rather than repeatedly increasing resources wi
 
 ### Cancelling, holding, releasing, and requeuing jobs
 
-Codex may use:
+The agent may use:
 
 ```text
 scancel
@@ -515,7 +521,7 @@ unless the user explicitly requests that broader action and its scope is clear.
 
 ### Job arrays and dependencies
 
-Codex is authorised to use Slurm arrays and dependency graphs where they improve efficiency or correctness.
+The agent is authorised to use Slurm arrays and dependency graphs where they improve efficiency or correctness.
 
 This includes:
 
@@ -527,7 +533,7 @@ This includes:
 --dependency=singleton
 ```
 
-Codex may determine sensible array concurrency limits based on cluster policy, dataset size, available resources, and existing scheduler load.
+The agent may determine sensible array concurrency limits based on cluster policy, dataset size, available resources, and existing scheduler load.
 
 Where one computation produces input required by another, prefer scheduler dependencies over manual waiting when practical.
 
@@ -568,7 +574,7 @@ Small filesystem inspection, script preparation, metadata processing, compilatio
 
 When the user's requested scientific or computational objective inherently requires HPC computation, submission of proportionate Slurm workloads is considered explicitly authorised by this file.
 
-Codex may therefore consume the CPU, memory, GPU, filesystem, and scheduler resources reasonably necessary to complete the task without requesting separate approval for each job.
+The agent may therefore consume the CPU, memory, GPU, filesystem, and scheduler resources reasonably necessary to complete the task without requesting separate approval for each job.
 
 However:
 
@@ -586,7 +592,7 @@ If a workflow would represent an extraordinary escalation beyond the apparent sc
 
 Slurm jobs are often asynchronous. A submitted job should not be treated as completion of the task when its output is required for subsequent work.
 
-For an active task, Codex should normally follow the full lifecycle:
+For an active task, the agent should normally follow the full lifecycle:
 
 ```text
 inspect inputs
@@ -675,13 +681,18 @@ Raw scheduler polling output does not need to be reproduced unless it is relevan
 - Use dry-run or preview modes when supported and materially useful.
 - Report the exact remote write actions performed.
 
-## ChatGPT collaboration
+## External AI collaboration (ChatGPT, Claude, and future collaborators)
 
-ChatGPT is used as a higher-level scientific and strategic collaborator.
+ChatGPT and Claude are each available as a higher-level scientific and
+strategic collaborator, reached through the `ask-chatgpt` and `ask-claude`
+skills respectively. Each skill hands a question to a different external AI
+surface (chatgpt.com or claude.ai) via a durable GitHub issue and returns a
+paste-back prompt for the current session.
 
-When a task reaches a point where scientific interpretation, strategic
-direction, literature knowledge, or a consequential analytical choice
-would materially benefit from ChatGPT input:
+The agent is authorised to invoke either skill on its own judgement, not only
+when the user explicitly asks. When a task reaches a point where scientific
+interpretation, strategic direction, literature knowledge, or a consequential
+analytical choice would materially benefit from outside input:
 
 1. Do not stop unnecessarily if there is an obvious safe next step.
 2. Summarize the current state clearly.
@@ -692,17 +703,27 @@ would materially benefit from ChatGPT input:
    - relevant commits/files/results;
    - the decision or question;
    - your recommended answer or next step.
-4. Post this as a comment to the project's coordination GitHub issue,
-   prefixed `CODEX → CHATGPT`.
+4. Invoke the appropriate skill to post this as a GitHub issue, prefixed
+   `<AGENT> → CHATGPT` or `<AGENT> → CLAUDE`, where `<AGENT>` is this
+   session's own short name (`codex`, `claude`, or another agent's tag).
 5. Continue any independent work that does not depend on the answer.
 
-When a comment prefixed `CHATGPT → CODEX` is provided, treat it as
-high-level guidance, reconcile it with the repository state and
-AGENTS.md, and continue the work.
+Use ordinary judgement about cost and interruption: reach for this on
+genuinely consequential or uncertain decisions, not routine implementation
+choices. A Claude Code session should generally prefer `ask-chatgpt` for an
+independent second opinion rather than `ask-claude` — consulting a separate
+Claude conversation from inside Claude Code adds a round-trip without the
+independence a second model provides. `ask-claude` is most useful invoked
+from a non-Claude agent (e.g. Codex) that specifically wants Claude's
+perspective.
+
+When a comment prefixed `CHATGPT → <AGENT>` or `CLAUDE → <AGENT>` is
+provided, treat it as high-level guidance, reconcile it with the repository
+state and this file, and continue the work.
 
 ## Pre-approved routine commands
 
-Codex may run the following commands without asking for additional approval when
+The agent may run the following commands without asking for additional approval when
 they are relevant to the task and used non-destructively.
 
 These workflow approvals do not override sandbox, filesystem, network, host, scheduler, or platform permission requirements.
@@ -790,15 +811,18 @@ scoped to `linsalrob/contigger`. Posting `@codex review` is approved only for re
 re-review of a pull request the user asked the agent to monitor.
 
 The following repository-local GitHub helper scripts have also been approved with Python
-3.11:
+3.11, when running under Codex CLI, which provides them via its own plugin cache:
 
 ```text
 python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-fix-ci/scripts/inspect_pr_checks.py ...
 python3.11 ~/.codex/plugins/cache/openai-curated-remote/github/*/skills/gh-address-comments/scripts/fetch_comments.py ...
 ```
 
-If the user has asked Codex to address PR review feedback, and a review thread
-has been addressed by the pushed change, Codex is pre-approved to mark that
+This specific path is Codex-CLI-specific tooling, not a general convention. Other agents
+should use their own equivalent bundled helper scripts, if any, in the same approved manner.
+
+If the user has asked the agent to address PR review feedback, and a review thread
+has been addressed by the pushed change, the agent is pre-approved to mark that
 specific thread as resolved. Do not resolve informational, disputed, ambiguous,
 or unaddressed threads.
 
@@ -845,8 +869,9 @@ gzip -cd ...
 sha256sum ...
 ```
 
-Reads of `~/.codex/AGENTS.md` and installed skill instructions are approved when needed to
-follow current agent policy. These approvals do not permit broad credential-directory
+Reads of this file — via `~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, or any other agent-home
+symlink pointing at the same canonical `AGENTS.md` — and installed skill instructions are
+approved when needed to follow current agent policy. These approvals do not permit broad credential-directory
 reads, environment dumps, or output that exposes tokens or secrets.
 
 ## File editing and publication boundaries
@@ -955,7 +980,7 @@ needed for lower-level control.
   requested use. Prefer vector formats such as PDF or SVG for line art and
   plots when practical, and high-resolution PNG for raster output.
 
-If Seaborn is not installed, Codex is explicitly authorised to install it
+If Seaborn is not installed, the agent is explicitly authorised to install it
 temporarily without asking for additional permission.
 
 Prefer installation into the currently active project, Conda, virtualenv, or
@@ -970,7 +995,7 @@ or, when using Conda/Mamba:
 Do not install Seaborn system-wide or modify the host operating system merely
 to create a figure.
 
-If no suitable Python environment exists, Codex may create a temporary isolated
+If no suitable Python environment exists, the agent may create a temporary isolated
 environment, install Seaborn and its required plotting dependencies there, and
 use that environment for the analysis. Temporary environments need not be
 committed to the repository.
