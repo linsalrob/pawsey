@@ -38,8 +38,10 @@ what Claude Code auto-loads), and both agents' `skills/` directories.
 
 Whenever this file, an overlay, or anything under `skills/` is edited, run
 `agents/build.sh` to reinstall before the change takes effect in either
-agent's next session — and again after any fresh `git pull`, since the
-installed copies won't update themselves.
+agent's next session. `build.sh` also wires up a `post-merge` git hook
+(`agents/hooks/post-merge`) the first time it runs in a checkout, so every
+later `git pull` reinstalls automatically — a fresh checkout (e.g. after a
+scratch purge) still needs one manual `agents/build.sh` run to bootstrap it.
 
 Wherever this file says **the agent**, it means whichever CLI coding agent is
 currently executing — Codex CLI, Claude Code, or another agent added later

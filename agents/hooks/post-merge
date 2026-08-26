@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Git post-merge hook: reinstalls AGENTS.md/CLAUDE.md/skills after every
+# `git pull`, so the local installed copies (see agents/build.sh) never
+# drift from what was just pulled.
+#
+# Wired up automatically by agents/build.sh (it symlinks .git/hooks/post-merge
+# to this file). Not committed into .git/hooks directly, since that directory
+# isn't versioned — this tracked copy is what survives a fresh clone.
+set -euo pipefail
+repo_root="$(git rev-parse --show-toplevel)"
+"$repo_root/agents/build.sh"

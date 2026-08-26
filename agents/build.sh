@@ -10,7 +10,9 @@
 # restoring onto a fresh /scratch) to (re)install working local copies.
 #
 # Re-run after editing AGENTS.md, AGENTS.codex.md, AGENTS.claude.md, or
-# anything under skills/.
+# anything under skills/. This script also wires up a post-merge git hook
+# (see hooks/post-merge) so it reruns itself automatically after future
+# `git pull`s — you only need to run it by hand once per fresh checkout.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -68,5 +70,22 @@ for skill_dir in skills/*/; do
     install_file "$skill_dir/SKILL.md" ~/.codex/skills/"$name"/SKILL.md
     install_file "$skill_dir/SKILL.md" ~/.claude/skills/"$name"/SKILL.md
 done
+
+# --- Git hook: auto-reinstall after `git pull` ---
+# Wires .git/hooks/post-merge (untracked, per-checkout) to the tracked
+# agents/hooks/post-merge, so a fresh checkout gets this on the first manual
+# build.sh run and every later `git pull` reinstalls itself automatically.
+
+git_dir=$(git rev-parse --git-dir 2>/dev/null || true)
+if [ -n "$git_dir" ]; then
+    hook_target="$(pwd)/hooks/post-merge"
+    hook_path="$git_dir/hooks/post-merge"
+    if [ ! -e "$hook_path" ] || [ -L "$hook_path" ]; then
+        ln -sf "$hook_target" "$hook_path"
+        echo "Linked git hook: $hook_path -> $hook_target"
+    else
+        echo "NOTE: $hook_path exists and isn't a symlink this script manages — leaving it alone."
+    fi
+fi
 
 echo "Done. Everything above is a plain file copy — rerun build.sh after any source edit or after restoring this checkout from GitHub."
