@@ -1,4 +1,4 @@
-# Shared Agent Guidance (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, ...)
+# Shared Agent Guidance (installed as `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`, ...)
 
 Global working agreements shared by every CLI coding agent in use on this system — currently Codex CLI and Claude Code, and any future agent whose home directory is pointed at this file. These instructions apply when no more specific repository or subdirectory guidance overrides them.
 
@@ -7,7 +7,8 @@ Global working agreements shared by every CLI coding agent in use on this system
 This is the **shared base**: policy that applies to every CLI coding agent
 identically (cluster/Slurm conventions, git safety, dependency and editing
 rules, secrets, continuity, definition of done). It lives at
-`GitHubs/pawsey/agents/AGENTS.md`.
+`agents/AGENTS.md` in `linsalrob/pawsey` on GitHub, which is the durable
+source of truth for all of this.
 
 Agent-specific behaviour lives in separate overlay files next to this one:
 
@@ -16,23 +17,29 @@ GitHubs/pawsey/agents/
   AGENTS.md          <- this file: shared base
   AGENTS.codex.md     <- Codex CLI overlay
   AGENTS.claude.md    <- Claude Code overlay
-  build.sh            <- concatenates base + each overlay into generated/
-  generated/
-    AGENTS.codex.md   <- base + AGENTS.codex.md  (symlinked from ~/.codex/AGENTS.md)
-    CLAUDE.md          <- base + AGENTS.claude.md (symlinked from ~/.claude/CLAUDE.md)
+  build.sh             <- installs base + each overlay as real files
+  skills/*/SKILL.md    <- installed the same way into both agents' skill dirs
 ```
 
 Codex CLI auto-loads `~/.codex/AGENTS.md`. Claude Code auto-loads
-`~/.claude/CLAUDE.md`, **not** `AGENTS.md` — that's why the generated file
-for Claude is named `CLAUDE.md` rather than `AGENTS.md`. Both generated files
+`~/.claude/CLAUDE.md`, **not** `AGENTS.md` — that's why the file installed
+for Claude is named `CLAUDE.md` rather than `AGENTS.md`. Both installed files
 are the shared base with that agent's overlay appended, so each agent gets
 the full picture in one file without having to dereference anything itself.
 
-Whenever this file or an overlay is edited, run `GitHubs/pawsey/agents/build.sh`
-to regenerate `generated/` before the change takes effect in either agent's
-next session. `~/.claude/AGENTS.md` still symlinks to this shared base
-directly (not generated) as a plain-policy reference; it is not what Claude
-Code auto-loads.
+**These are installed as real file copies, not symlinks.** This checkout
+lives under `$HOME/GitHubs`, which on this system is itself symlinked onto
+`/scratch` — subject to Pawsey's 21-day scratch purge policy. A symlink from
+`~/.codex/` or `~/.claude/` into a path that can vanish in three weeks would
+silently break both agents' config. `agents/build.sh` installs plain copies
+instead, into `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`,
+`~/.claude/AGENTS.md` (the shared base alone, for manual reference — not
+what Claude Code auto-loads), and both agents' `skills/` directories.
+
+Whenever this file, an overlay, or anything under `skills/` is edited, run
+`agents/build.sh` to reinstall before the change takes effect in either
+agent's next session — and again after any fresh `git pull`, since the
+installed copies won't update themselves.
 
 Wherever this file says **the agent**, it means whichever CLI coding agent is
 currently executing — Codex CLI, Claude Code, or another agent added later
