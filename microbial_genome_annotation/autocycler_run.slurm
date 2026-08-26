@@ -3,7 +3,7 @@
 #SBATCH --job-name=autocycler
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=64
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
 #SBATCH --mem=128G
@@ -44,8 +44,9 @@ echo "Temporary files are being written to $TMPDIR" >&2
 
 
 # Get arguments.
-threads=$SLURM_CPUS_PER_TASK     # threads per job
 jobs=4                           # number of simultaneous jobs
+threads=$((SLURM_CPUS_PER_TASK / jobs))  # threads per parallel assembly
+if (( threads < 1 )); then threads=1; fi
 read_type=${3:-ont_r10}          # read type (default = ont_r10)
 
 # Input assembly jobs that exceed this time limit will be killed
@@ -99,7 +100,7 @@ for f in $TMPDIR/assemblies/plassembler*.fasta; do
 done
 
 # Give contigs from Canu and Flye extra consensus weight
-for f in $TMPDIR/assemblies/canu*.fasta assemblies/flye*.fasta; do
+for f in $TMPDIR/assemblies/canu*.fasta $TMPDIR/assemblies/flye*.fasta; do
     sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' "$f"
 done
 shopt -u nullglob
@@ -130,4 +131,3 @@ mkdir -p `dirname $2`
 
 rsync -av $TMPDIR/ $2
 rm -rf $TMPDIR
-

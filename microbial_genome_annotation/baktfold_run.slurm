@@ -3,6 +3,7 @@
 #SBATCH --job-name=bk_run
 #SBATCH --gres=gpu:8
 #SBATCH --partition=gpu-dev
+#SBATCH --exclusive
 #SBATCH --time=0-4
 #SBATCH --ntasks=1
 #SBATCH -o %x-%j.out
@@ -20,4 +21,3 @@ VENV_DIR="/scratch/pawsey1018/edwa0468/software/pip/baktfold"
 source $VENV_DIR/bin/activate
 
 baktfold run -i $1 -o $2 -d /scratch/references/baktfold_db -f -t 16
-

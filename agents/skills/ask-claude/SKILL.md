@@ -12,7 +12,7 @@ description: >
   benefit from Claude's input, even without being asked. Works both inside
   GitHub repositories and in non-Git scientific/vibe-analysis workspaces.
   Creates a durable GitHub issue, optionally creates a compact evidence bundle
-  in linsalrob/claude-handoffs, and ends with a prompt the user can paste
+  in linsalrob/agent-handoffs, and ends with a prompt the user can paste
   directly into Claude — clearly labelled so it is not confused with the
   ask-chatgpt skill's ChatGPT-bound prompt.
 ---
@@ -60,7 +60,7 @@ The workflow must:
 2. gather the minimum context and evidence Claude needs;
 3. create a GitHub issue;
 4. when useful, create a small shared evidence bundle in
-   `linsalrob/claude-handoffs`;
+   `linsalrob/agent-handoffs`;
 5. explicitly instruct Claude to finish with a paste-back prompt for
    `<AGENT>`;
 6. end the response with a short prompt the user can paste into Claude —
@@ -127,7 +127,7 @@ Create the handoff issue in the current project's issue tracker.
 Use repository files, commits, PRs, existing issues, and committed results as
 the primary context.
 
-A central evidence bundle in `linsalrob/claude-handoffs` is optional in this
+A central evidence bundle in `linsalrob/agent-handoffs` is optional in this
 mode. Create one only when material evidence needed by Claude is local,
 untracked, inconvenient to add to the source repository, or better represented
 as a deliberately small snapshot.
@@ -141,7 +141,7 @@ Use this mode when the current workspace is not a usable GitHub-backed project.
 
 Create the handoff issue in:
 
-    linsalrob/claude-handoffs
+    linsalrob/agent-handoffs
 
 Create a project-specific directory and a handoff evidence bundle there.
 
@@ -153,11 +153,11 @@ analysis rather than a code repository is the primary artifact.
 
 Repository:
 
-    linsalrob/claude-handoffs
+    linsalrob/agent-handoffs
 
 Preferred local checkout:
 
-    ${CLAUDE_HANDOFF_DIR:-$HOME/.cache/claude-handoffs}
+    ${CLAUDE_HANDOFF_DIR:-$HOME/.cache/agent-handoffs}
 
 If the checkout exists:
 
@@ -165,7 +165,7 @@ If the checkout exists:
 
 If it does not exist:
 
-    gh repo clone linsalrob/claude-handoffs "$HANDOFF_DIR"
+    gh repo clone linsalrob/agent-handoffs "$HANDOFF_DIR"
 
 If the checkout cannot be updated safely because it has unrelated local
 changes, do not discard them. Inspect the state, preserve the changes, and use
@@ -183,7 +183,7 @@ For Mode B, determine a concise stable project slug using this priority:
 
 1. an explicit `project_slug` in a local `CLAUDE_HANDOFF.md`;
 2. an existing matching project under
-   `claude-handoffs/projects/`;
+   `agent-handoffs/projects/`;
 3. the project name or title in `SCIENTIFIC_BRIEF.md`;
 4. the current working-directory basename.
 
@@ -404,7 +404,7 @@ The handoff README should contain:
 - local-only files that were not copied;
 - `<AGENT>`'s current assessment.
 
-Commit and push the evidence bundle to `linsalrob/claude-handoffs` before
+Commit and push the evidence bundle to `linsalrob/agent-handoffs` before
 creating the issue so the issue can link to a stable committed location.
 
 Use a concise commit message such as:
@@ -439,10 +439,10 @@ For Mode A:
 
 For Mode B:
 
-    linsalrob/claude-handoffs
+    linsalrob/agent-handoffs
 
 If Mode A uses a shared evidence bundle, the project issue must link directly
-to the relevant path in `linsalrob/claude-handoffs`.
+to the relevant path in `linsalrob/agent-handoffs`.
 
 ## Issue body
 
@@ -472,7 +472,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
     Session type: scientific/data-analysis workspace
     Working directory: <path>
     Git repository: none or not used for this analysis
-    Shared project: linsalrob/claude-handoffs/projects/<project>/
+    Shared project: linsalrob/agent-handoffs/projects/<project>/
 
     ## Important findings
 
@@ -503,7 +503,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
     This issue is a handoff from an active <AGENT> CLI session.
 
     Please inspect this issue first. Then inspect relevant repository context
-    and any linked supporting material in linsalrob/claude-handoffs where that
+    and any linked supporting material in linsalrob/agent-handoffs where that
     would improve the answer.
 
     Answer the user's question directly. Be critical where appropriate, and
@@ -511,7 +511,7 @@ throughout, including its all-caps form where the template shows `AGENT`):
 
     If you create a small durable text artifact that would materially help the
     continuing analysis, you may add it to the same handoff directory in
-    linsalrob/claude-handoffs when GitHub write access is available. Do not
+    linsalrob/agent-handoffs when GitHub write access is available. Do not
     overwrite <AGENT>-created evidence. Do not modify the source project
     repository unless the user explicitly asked you to.
 
@@ -578,7 +578,7 @@ This comes from my active <AGENT> CLI session. Please inspect the issue and any
 relevant repository context.
 
 If the issue links to supporting material in
-https://github.com/linsalrob/claude-handoffs, inspect the relevant project and
+https://github.com/linsalrob/agent-handoffs, inspect the relevant project and
 handoff directory as part of the analysis.
 
 Please answer the question posed in the issue.
