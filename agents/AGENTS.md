@@ -4,7 +4,7 @@ Global working agreements shared by every CLI coding agent in use on this system
 
 ## Scope and provenance
 
-This file lives at `AGENTS.md` in the `pawsey` repository (`GitHubs/pawsey/codex/AGENTS.md`) and is symlinked into each agent's home directory (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, and so on) so that every agent reads the same policy from one canonical source. Skills referenced here (e.g. `ask-chatgpt`, `ask-claude`) live alongside it under `skills/` and are symlinked the same way.
+This file lives at `AGENTS.md` in the `pawsey` repository (`GitHubs/pawsey/agents/AGENTS.md`) and is symlinked into each agent's home directory (`~/.codex/AGENTS.md`, `~/.claude/AGENTS.md`, and so on) so that every agent reads the same policy from one canonical source. Skills referenced here (e.g. `ask-chatgpt`, `ask-claude`) live alongside it under `skills/` and are symlinked the same way.
 
 Wherever this file says **the agent**, it means whichever CLI coding agent is currently executing — Codex CLI, Claude Code, or another agent added later. Nothing here should be read as applying only to Codex unless a passage explicitly says so (a few Codex-CLI-specific tooling paths are called out as such where they occur).
 
