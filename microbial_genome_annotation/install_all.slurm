@@ -14,11 +14,12 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 eval "$(mamba shell hook --shell bash)"
 
 CONDAENV=microbial_annotations
-if [[ -e /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV ]]; then
-	mamba env remove --yes --prefix /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
+ENV_DIR="/scratch/${PAWSEY_PROJECT}/${USER}/software/miniconda3/${CONDAENV}"
+if [[ -e "$ENV_DIR" || -L "$ENV_DIR" ]]; then
+	mamba env remove --yes --prefix "$ENV_DIR" || rm -rf -- "$ENV_DIR"
 fi
 
-mamba env create -y --prefix=/scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV -f  autocycler.yaml
+mamba env create -y --prefix="$ENV_DIR" -f autocycler.yaml
 echo -e "autocycler installed in $CONDAENV\n\nmamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV"
 
 mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/$CONDAENV
@@ -28,7 +29,7 @@ rm -rf $PLASSEMBLER_DB
 plassembler download -d $PLASSEMBLER_DB
 
 echo "Installing bakta and dnaapler"
-mamba install bakta dnaapler
+mamba install --yes bakta dnaapler
 
 echo "Installing bakta databases"
 
