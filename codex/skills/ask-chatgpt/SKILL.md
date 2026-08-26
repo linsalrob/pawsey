@@ -520,7 +520,9 @@ handoff directory as part of the analysis.
 
 Please answer the question posed in the issue.
 
-Most importantly, when you have finished your analysis, end your response with
+Most importantly, when you have finished your analysis, add your analyses to the
+issue, and draft a brief response that the I can provide back to codex. Most
+communication should be through the issue, not through copy/paste. End your response with
 a section called:
 
 ### PROMPT FOR CODEX
