@@ -143,6 +143,37 @@ scontrol show reservation
 
 Do not modify cluster-wide Slurm configuration, reservations, accounts, associations, QOS definitions, nodes, partitions, or other administrative scheduler state unless the user explicitly requests that administrative action.
 
+
+### Setonix GPU resource allocation (Slurm 25.11.7+)
+
+For shared GPU-node jobs on Setonix, each requested Slurm GPU represents an allocation pack containing:
+
+- 1 GPU/GCD;
+- its directly connected 8-CPU-core chiplet;
+- approximately 29 GB of memory.
+
+At the `sbatch` or `salloc` allocation stage:
+
+- explicitly set `--ntasks` equal to the total number of GPUs requested for the whole job;
+- for multi-node jobs, set `--nodes` explicitly and preferably also set `--ntasks-per-node` equal to the number of GPUs requested per node;
+- prefer `--gres=gpu:<GPUS_PER_NODE>` or `--gpus-per-node=<GPUS_PER_NODE>` for requesting GPUs;
+- do not use `#SBATCH --gpus-per-task` for multi-node allocations because it does not reliably allocate the corresponding CPU chiplets;
+- when requesting an entire GPU node, use `--exclusive`.
+
+The allocation-stage task count describes GPU allocation packs and may differ from the task count used later by `srun`. Configure the actual task layout, GPUs per task, CPU cores per task, and GPU binding in `srun`.
+
+Example for two nodes with three GPUs per node:
+
+    #SBATCH --nodes=2
+    #SBATCH --gres=gpu:3
+    #SBATCH --ntasks=6
+    #SBATCH --ntasks-per-node=3
+    #SBATCH --account=${PAWSEY_PROJECT}-gpu
+
+The explicit `--ntasks` setting is optional for a single-node, single-GPU job, where one task is the default, and for jobs using `--exclusive`. Nevertheless, specifying it explicitly is preferred for consistency.
+
+If an allocation omits the required task count, Slurm may reserve the GPUs and memory but only one 8-core chiplet per node. Subsequent `srun` steps may then fail with “More processors requested than permitted” or related completion errors.
+
 ### Autonomous job submission
 
 Codex may autonomously:
