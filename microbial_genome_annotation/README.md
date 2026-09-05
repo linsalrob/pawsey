@@ -4,7 +4,7 @@ No, its not a pipeline, its a bunch of slurm scripts, but I'm sure you can deal 
 
 Starting with Nanopore fastq files we:
 
-1. Assemble using [autocycler](https://github.com/rrwick/Autocycler)
+1. Assemble using [autocycler](https://github.com/rrwick/Autocycler), or [plassembler](https://github.com/gbouras13/plassembler) if the sample is a plasmid prep rather than a whole isolate
 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 3. Annotate using [bakta](https://github.com/oschwengers/bakta)
 4. Improve using [baktfold](https://github.com/gbouras13/baktfold)
@@ -35,6 +35,32 @@ for F in ${AC[@]}; do PREFIX=$F perl -pe 's/^>/>$ENV{PREFIX}_/' $F/autocycler_ou
 
 _Note:_ Important: there is no `;` between `PREFIX=$F` and `perl -pe` otherwise `PREFIX` is undefined.
 _Note2:_ Make sure you run `bakta` with the `--keep-contig-headers` option otherwise this work will be lost!
+
+### 1c. Optional. Plasmid preps: assemble with [plassembler](https://github.com/gbouras13/plassembler) instead.
+
+Autocycler expects a whole bacterial isolate. If a barcode is a plasmid prep, use
+`plassembler_run.slurm` instead. It takes the reads, an output directory, and
+optionally the approximate lower-bound chromosome length. Pass `none` when the
+reads contain no chromosome at all, which runs plassembler with `--no_chromosome`:
+
+```
+sbatch ~/GitHubs/pawsey/microbial_genome_annotation/plassembler_run.slurm barcode16.fastq.gz barcode16_plassembler none
+```
+
+For a normal isolate where you do expect a chromosome, give its approximate
+lower-bound length instead (the plassembler default is 1000000):
+
+```
+sbatch ~/GitHubs/pawsey/microbial_genome_annotation/plassembler_run.slurm AB5075_AdeB.fastq AB5075_AdeB_plassembler 2000000
+```
+
+The assembled plasmids are written to `<output>/plassembler_out/plassembler_plasmids.fasta`,
+with a summary of the copy numbers and PLSDB hits in `plassembler_summary.tsv`.
+
+_Note:_ plassembler is already in `autocycler.yaml`, so it is installed as part of
+the `microbial_annotations` environment. `plassembler_install.slurm` only needs to be
+run if that environment is missing, or to reinstall the PLSDB database -- which does
+happen, because `/scratch` gets purged.
 
 ## 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 
