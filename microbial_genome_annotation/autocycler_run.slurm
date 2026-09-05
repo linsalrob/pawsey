@@ -58,6 +58,15 @@ MAXCONTIGS=100
 # the default minimum read depth was 25, but some of my samples have fewer reads, and 10 works!
 MINREADDEPTH=10
 
+# Size-completeness gate. Autocycler will happily emit a consensus containing
+# only a small plasmid if the chromosome clusters fail QC, and a contig count
+# alone cannot tell that apart from a closed genome. So the final assembly is
+# also required to be a plausible fraction of the estimated genome size.
+# 0.75-1.25 matches the defaults in Ryan Wick's Fast Autocycler with Flye
+# fallback pipeline. Override by exporting these before sbatch.
+MIN_RECOVERED_FRACTION=${MIN_RECOVERED_FRACTION:-0.75}
+MAX_RECOVERED_FRACTION=${MAX_RECOVERED_FRACTION:-1.25}
+
 # Validate input parameters
 if [[ -z "$reads" || -z "$threads" || -z "$jobs" ]]; then
     echo "Usage: $0 <read_fastq> <outputdir> [read_type]" 1>&2
@@ -125,9 +134,80 @@ done
 # Step 7: combine resolved clusters into a final assembly
 autocycler combine -a $TMPDIR/autocycler_out -i $TMPDIR/autocycler_out/clustering/qc_pass/cluster_*/5_final.gfa 
 
+# Step 8: size-completeness gate
+#
+# Judge the assembly on recovered fraction and resolution status, never on
+# contig or cluster count. A barcode whose chromosome clusters all failed QC
+# can still emit a tidy "2 contig" consensus that is 0.6% of the genome.
+consensus_yaml=$TMPDIR/autocycler_out/consensus_assembly.yaml
+assembled_bases=$(awk '/^consensus_assembly_bases:/ {print $2}' "$consensus_yaml")
+fully_resolved=$(awk '/^consensus_assembly_fully_resolved:/ {print $2}' "$consensus_yaml")
+cluster_count=$(grep -c '^- length:' "$consensus_yaml" || true)
+recovered_fraction=$(awk -v a="$assembled_bases" -v g="$genome_size" 'BEGIN{printf "%.4f", (g>0 ? a/g : 0)}')
+
+gate_status=PASS
+gate_reason=""
+if [[ "$fully_resolved" != "true" ]]; then
+	gate_status=FAIL
+	gate_reason="consensus assembly not fully resolved"
+fi
+if awk -v f="$recovered_fraction" -v lo="$MIN_RECOVERED_FRACTION" 'BEGIN{exit !(f<lo)}'; then
+	gate_status=FAIL
+	gate_reason="${gate_reason:+$gate_reason; }recovered fraction $recovered_fraction below $MIN_RECOVERED_FRACTION"
+elif awk -v f="$recovered_fraction" -v hi="$MAX_RECOVERED_FRACTION" 'BEGIN{exit !(f>hi)}'; then
+	gate_status=FAIL
+	gate_reason="${gate_reason:+$gate_reason; }recovered fraction $recovered_fraction above $MAX_RECOVERED_FRACTION"
+fi
+
+# If the consensus failed, look for a Flye assembly of plausible size. This is
+# reported as a candidate only -- it is a single-assembler draft, not an
+# Autocycler consensus, and must never be presented as one.
+flye_fallback=""
+if [[ "$gate_status" == "FAIL" ]]; then
+	shopt -s nullglob
+	for f in $TMPDIR/assemblies/flye_*.fasta; do
+		fb=$(awk '!/^>/ {t+=length($0)} END{print t+0}' "$f")
+		if awk -v b="$fb" -v g="$genome_size" -v lo="$MIN_RECOVERED_FRACTION" -v hi="$MAX_RECOVERED_FRACTION" \
+			'BEGIN{f=(g>0?b/g:0); exit !(f>=lo && f<=hi)}'; then
+			flye_fallback="$(basename "$f"):${fb}bp"
+			break
+		fi
+	done
+	shopt -u nullglob
+fi
+
+summary=$TMPDIR/autocycler_out/assembly_gate.tsv
+{
+	printf "sample\testimated_genome_size\tassembled_bases\trecovered_fraction\t"
+	printf "min_fraction\tmax_fraction\tfully_resolved\tclusters\tgate\treason\tflye_fallback\n"
+	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+		"$(basename "$output")" "$genome_size" "$assembled_bases" "$recovered_fraction" \
+		"$MIN_RECOVERED_FRACTION" "$MAX_RECOVERED_FRACTION" "$fully_resolved" \
+		"$cluster_count" "$gate_status" "${gate_reason:--}" "${flye_fallback:--}"
+} > "$summary"
+
+echo "=== size-completeness gate ===" >&2
+column -t -s$'\t' "$summary" >&2 || cat "$summary" >&2
+
 ## END
 
 mkdir -p `dirname $2`
 
 rsync -av $TMPDIR/ $2
 rm -rf $TMPDIR
+
+# Exit non-zero on a failed gate, *after* saving the results, so that any
+# downstream job chained with --dependency=afterok (dnaapler, bakta, baktfold)
+# does not run on an incomplete assembly. The output directory is still fully
+# populated for inspection.
+if [[ "$gate_status" == "FAIL" ]]; then
+	echo "$0: assembly gate FAILED for $output: $gate_reason" >&2
+	if [[ -n "$flye_fallback" ]]; then
+		echo "$0: a Flye fallback candidate of acceptable size exists ($flye_fallback)." >&2
+		echo "$0: it is a single-assembler draft, not an Autocycler consensus. Review it manually." >&2
+	fi
+	echo "$0: not proceeding to annotation. See $output/autocycler_out/assembly_gate.tsv" >&2
+	exit 3
+fi
+
+echo "$0: assembly gate PASSED for $output (recovered fraction $recovered_fraction)" >&2
