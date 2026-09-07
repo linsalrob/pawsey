@@ -3,7 +3,7 @@
 #SBATCH --job-name=bakta
 #SBATCH --time=1-0
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=64GB
 #SBATCH -o %x-%j.out
 #SBATCH -e %x-%j.err
@@ -23,5 +23,9 @@ CONDAENV=microbial_annotations
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$CONDAENV
 
 BAKTA_DB=/scratch/pawsey1018/edwa0468/Databases/bakta/db
-bakta --keep-contig-headers --db $BAKTA_DB --output $2 $1
+
+# bakta defaults to a single thread, which is hours per genome. Derive the
+# thread count from the allocation, the same way autocycler_run.slurm does.
+bakta --keep-contig-headers --db $BAKTA_DB --threads ${SLURM_CPUS_PER_TASK:-1} \
+	--output $2 $1
 
