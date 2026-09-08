@@ -8,6 +8,7 @@ Starting with Nanopore fastq files we:
 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 3. Annotate using [bakta](https://github.com/oschwengers/bakta)
 4. Improve using [baktfold](https://github.com/gbouras13/baktfold)
+5. Optionally, find prophages using [PhiSpy](https://github.com/linsalrob/PhiSpy)
 
 
 Each of the four steps has two slurm scripts, an `STEP_install.slurm` which will install the software and download any required databases, and a `STEP_run.slurm` that will run the code.
@@ -61,6 +62,33 @@ _Note:_ plassembler is already in `autocycler.yaml`, so it is installed as part 
 the `microbial_annotations` environment. `plassembler_install.slurm` only needs to be
 run if that environment is missing, or to reinstall the PLSDB database -- which does
 happen, because `/scratch` gets purged.
+
+## 5. Optional. Find prophages using [PhiSpy](https://github.com/linsalrob/PhiSpy)
+
+PhiSpy needs gene calls, not just sequence, so run it on the GenBank file bakta
+writes rather than on an assembly:
+
+```
+sbatch /home/edwa0468/GitHubs/pawsey/microbial_genome_annotation/phispy_run.slurm AB5075_AdeB_bakta/dnaapler_reoriented.gbff AB5075_AdeB_phispy
+```
+
+PhiSpy ships around 140 training sets and recommends the most closely related
+one. List them with `PhiSpy.py --list short` and pass one as a third argument:
+
+```
+sbatch /home/edwa0468/GitHubs/pawsey/microbial_genome_annotation/phispy_run.slurm AB5075_AdeB_bakta/dnaapler_reoriented.gbff AB5075_AdeB_phispy data/trainSet_Saureus.txt
+```
+
+The default generic set is built from 48 genomes. It is the right choice when
+nothing closely related is available, and also when counts need to be
+comparable across genomes of different species -- an organism-specific set can
+change the number of regions called, so it is worth running both and reporting
+the difference rather than picking one silently.
+
+_Note:_ prophage coordinates are relative to the sequence PhiSpy was given. If
+that came through dnaapler, the origin has been rotated, so those coordinates
+do not line up with the pre-dnaapler assembly. Map a feature across if you need
+to compare.
 
 ## 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 
