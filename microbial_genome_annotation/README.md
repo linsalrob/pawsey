@@ -9,6 +9,7 @@ Starting with Nanopore fastq files we:
 3. Annotate using [bakta](https://github.com/oschwengers/bakta)
 4. Improve using [baktfold](https://github.com/gbouras13/baktfold)
 5. Optionally, find prophages using [PhiSpy](https://github.com/linsalrob/PhiSpy)
+6. Optionally, find antiviral defence systems using [PADLOC](https://github.com/padlocbio/padloc) and [DefenseFinder](https://github.com/mdmparis/defense-finder)
 
 
 Each of the four steps has two slurm scripts, an `STEP_install.slurm` which will install the software and download any required databases, and a `STEP_run.slurm` that will run the code.
@@ -89,6 +90,68 @@ _Note:_ prophage coordinates are relative to the sequence PhiSpy was given. If
 that came through dnaapler, the origin has been rotated, so those coordinates
 do not line up with the pre-dnaapler assembly. Map a feature across if you need
 to compare.
+
+## 6. Optional. Find antiviral defence systems
+
+Both tools take bakta's output and both are worth running: they use different
+model sets and different naming, and they do not find the same things.
+
+### [PADLOC](https://github.com/padlocbio/padloc)
+
+Needs the proteins AND the feature coordinates, because defence systems are
+called from gene content and synteny together:
+
+```
+sbatch ~/GitHubs/pawsey/microbial_genome_annotation/padloc_run.slurm \
+    AB5075_AdeB_bakta/dnaapler_reoriented.faa \
+    AB5075_AdeB_bakta/dnaapler_reoriented.gff3 \
+    AB5075_AdeB_padloc
+```
+
+The .faa and .gff3 must come from the same bakta run or the coordinates will
+not match the proteins. Passing a nucleotide FASTA instead makes PADLOC call
+genes itself with prodigal, which throws away the bakta annotation.
+
+_Note:_ the run script rewrites the GFF before handing it over, for two
+reasons. bakta appends the genome sequence after a `##FASTA` line, which PADLOC
+parses as tens of thousands of malformed feature rows. More importantly, PADLOC
+replaces a CDS's `ID` with its `Name` whenever the CDS has a `pseudo`
+attribute — correct for RefSeq and GenBank GFFs, where `Name` is an
+identifier, but bakta puts the **product description** there. The substitution
+turns a locus tag into something like `DNA 3'-5' helicase`, which then fails to
+match the protein in the .faa and PADLOC aborts with
+`N protein sequence IDs are missing from GFF file`. It only fires when a
+pseudogene happens to hit a defence HMM, so across a set of genomes it looks
+sporadic. The script strips the `pseudo` attribute so the locus tag survives.
+
+### [DefenseFinder](https://github.com/mdmparis/defense-finder)
+
+Takes the protein FASTA alone:
+
+```
+sbatch ~/GitHubs/pawsey/microbial_genome_annotation/defensefinder_run.slurm \
+    AB5075_AdeB_bakta/dnaapler_reoriented.faa AB5075_AdeB_defensefinder
+```
+
+DefenseFinder infers gene adjacency from the order of records in the FASTA, so
+do not sort or shuffle the .faa — bakta writes it in coordinate order, which is
+what is wanted.
+
+### Comparing the two
+
+They report different numbers and use different names for the same systems
+(`RM_type_I` against `RM_Type_I`, `AbiO-Nhi_family` against `AbiO`,
+`cas_type_III-A` against `Cas`). There is no shared controlled vocabulary, so
+any cross-tool agreement count is approximate and should be described as such.
+
+### Databases
+
+`padloc_install.slurm` and `defensefinder_install.slurm` put their databases in
+`~/Databases/padloc` and `~/Databases/defensefinder`, outside the conda
+environments, so rebuilding an environment does not mean re-downloading. PADLOC
+ignores `--data` during `--db-update` and always installs into the package
+directory, so the install script downloads and then relocates, leaving a
+symlink behind.
 
 ## 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 
