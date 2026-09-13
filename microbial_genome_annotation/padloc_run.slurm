@@ -57,9 +57,10 @@ if [[ $# -eq 3 ]]; then
 	#    file". It only triggers when a pseudogene happens to hit one of the
 	#    defence HMMs, so it appears sporadically across a set of genomes.
 	#
-	#    Dropping the 'pseudo' attribute keeps the locus tag as the ID, so
-	#    pseudogenes are carried through like any other CDS rather than being
-	#    silently lost from the join.
+	#    This is padlocbio/padloc#8, still open, with an upstream patch that
+	#    removes the substitution entirely. Dropping the 'pseudo' attribute
+	#    here achieves the same result without modifying the installed tool,
+	#    so the environment stays reproducible from the install script alone.
 	CLEAN_GFF="$OUT/$(basename "${GFF%.*}")_padloc_input.gff3"
 	sed '/^##FASTA/,$d' "$GFF" | sed 's/;pseudo=[^;]*//; s/pseudo=[^;]*;//' > "$CLEAN_GFF"
 	echo "Prepared GFF for PADLOC: $CLEAN_GFF" >&2

@@ -36,20 +36,22 @@ mamba create -y --prefix="$ENV_DIR" -c conda-forge -c bioconda -c padlocbio padl
 mamba activate "$ENV_DIR"
 padloc --version
 
-# --db-update ignores --data and always installs into the package's own data
-# directory, so download first, then relocate and symlink back. The symlink
-# means a bare `padloc` with no --data still works, while the 950 MB database
-# lives with the other reference data instead of inside the environment.
-echo "Downloading the PADLOC database"
-padloc --db-update
+# PADLOC parses its options one at a time and acts on the first it recognises,
+# so --data has to come BEFORE --db-update or it is ignored and the database
+# lands in the conda environment instead. This is padlocbio/padloc#31, closed
+# but still present in v2.0.0. Order matters here; do not rearrange.
+echo "Downloading the PADLOC database into $DB_DIR"
+mkdir -p "$DB_DIR"
+padloc --data "$DB_DIR" --db-update
 
+# Guard in case the ordering behaviour changes again: if the database still
+# landed inside the environment, move it and symlink back.
 PKG_DATA="$ENV_DIR/data"
 if [[ -d "$PKG_DATA" && ! -L "$PKG_DATA" ]]; then
+	echo "Database landed in $PKG_DATA despite --data; relocating" >&2
 	rm -rf -- "$DB_DIR"
-	mkdir -p "$(dirname "$DB_DIR")"
 	mv "$PKG_DATA" "$DB_DIR"
 	ln -s "$DB_DIR" "$PKG_DATA"
-	echo "Database relocated to $DB_DIR, symlinked from $PKG_DATA"
 fi
 
 echo "=== database contents ==="

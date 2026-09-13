@@ -124,6 +124,12 @@ match the protein in the .faa and PADLOC aborts with
 pseudogene happens to hit a defence HMM, so across a set of genomes it looks
 sporadic. The script strips the `pseudo` attribute so the locus tag survives.
 
+This is [padlocbio/padloc#8](https://github.com/padlocbio/padloc/issues/8),
+still open; upstream offers a patch that removes the substitution from
+`padloc.R`. Stripping the attribute achieves the same thing without modifying
+the installed tool, so the environment stays reproducible from the install
+script alone.
+
 ### [DefenseFinder](https://github.com/mdmparis/defense-finder)
 
 Takes the protein FASTA alone:
@@ -149,9 +155,12 @@ any cross-tool agreement count is approximate and should be described as such.
 `padloc_install.slurm` and `defensefinder_install.slurm` put their databases in
 `~/Databases/padloc` and `~/Databases/defensefinder`, outside the conda
 environments, so rebuilding an environment does not mean re-downloading. PADLOC
-ignores `--data` during `--db-update` and always installs into the package
-directory, so the install script downloads and then relocates, leaving a
-symlink behind.
+parses its options one at a time and acts on the first it recognises, so
+`--data` must be given **before** `--db-update` or it is silently ignored and
+the database lands in the conda environment
+([padlocbio/padloc#31](https://github.com/padlocbio/padloc/issues/31), closed
+but still present in v2.0.0). The install script uses the correct order and
+keeps a relocate-and-symlink guard in case that behaviour changes.
 
 ## 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 
