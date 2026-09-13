@@ -678,6 +678,58 @@ Raw scheduler polling output does not need to be reproduced unless it is relevan
   may be installed temporarily into an isolated environment whenever required
   for an in-scope analysis.
 
+## Installing scientific software
+
+Research tools are frequently version-sensitive, and the failure modes are
+often already known to their maintainers. Before spending time diagnosing an
+install or a crash, spend a minute checking whether it has been reported.
+
+- **Search the upstream issue tracker before debugging, and search it again
+  before reporting anything.** Include closed issues: a closed issue is often
+  the one that explains the behaviour, and "closed" does not mean "fixed".
+  Search the exact error string first, then the symptom in your own words.
+
+  ```bash
+  gh api -X GET search/issues -f q='repo:OWNER/NAME "exact error text"' \
+    --jq '.items[] | "#\(.number) [\(.state)] \(.title)"'
+  ```
+
+- **Assume argument order and option interactions matter.** Some tools parse
+  options one at a time and act on the first they recognise, so a flag given
+  after an action is silently ignored rather than rejected. If an option
+  appears to have had no effect, check the order before concluding it is
+  broken.
+
+- **Check that a bundled database matches the binary that reads it.** Where one
+  tool wraps another and hands it a database path, that inner pair can be
+  mismatched even when the outer tool installs cleanly. Version skew between a
+  packaged reference database and a separately-versioned binary is a common and
+  confusing failure.
+
+- **Expect annotation formats to disagree.** The same file type written by
+  different tools carries different conventions in its optional fields, and a
+  downstream tool may assume one producer's convention. Where a format is only
+  loosely specified, check what the consumer actually does with the field
+  rather than assuming the file is simply valid or invalid.
+
+- **A sporadic failure across a uniform set of inputs usually has a
+  data-dependent trigger**, not a random one. If a step fails on some samples
+  and not others, find what is present in the failing inputs and absent from
+  the rest before retrying or increasing resources.
+
+- **Record which upstream issue a workaround corresponds to**, in a comment
+  next to the workaround. It marks the code as removable when upstream fixes
+  the problem, and stops the next person rediscovering it.
+
+- Prefer a workaround in your own wrapper over patching an installed tool, so
+  the environment stays reproducible from the install script alone. Where a
+  tool must be patched, record that in the install script rather than applying
+  it by hand.
+
+- Reporting a genuine, unreported bug upstream is worthwhile and in scope.
+  Filing an issue on a third-party repository is an outward-facing action:
+  draft it, confirm with the user, and check for duplicates first.
+
 ## Editing files
 
 - Make the smallest safe change that solves the issue.
