@@ -16,6 +16,34 @@ to find reference databases.
 
 ## Install
 
+### Optional
+
+I use a private repository for handoffs between agents. If you want to use it, create a
+GitHub repository called `agent-handoffs` and set it to private.
+
+```bash
+gh repo create agent-handoffs --private --clone
+```
+
+Then add the following lines to your `~/.bashrc`:
+
+```bash
+export AGENT_GH_OWNER=your-github-name
+export AGENT_HANDOFF_REPO=your-github-name/agent-handoffs
+```
+
+Once you have done this you can connect ChatGPT and Claude Code to share instructions and code snippets. The handoff feature is optional, but it can be useful for sharing context between agents, and having them argue over the best solution to a problem.
+
+(Note: if AGENT_HANDOFF_REPO is not set, the handoff feature will be disabled.)
+
+### If you are already on setonix, the Pawsey HPC
+
+```bash
+~edwa0468/GitHubs/pawsey/agents/build.sh
+```
+
+### If that doesn't work, or you are on a different system, try this:
+
 ```bash
 git clone git@github.com:linsalrob/pawsey.git
 pawsey/agents/build.sh
@@ -25,13 +53,6 @@ This puts the instructions where each agent reads them:
 `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. If you already have your own
 copies there, they are saved as `<file>.bak.<date>` first.
 
-If you aren't `linsalrob`, set your own GitHub account before running
-`build.sh`, and add the same lines to `~/.bashrc`:
-
-```bash
-export AGENT_GH_OWNER=your-github-name
-export AGENT_HANDOFF_REPO=your-github-name/agent-handoffs   # optional
-```
 
 ## Updating
 

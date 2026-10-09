@@ -49,7 +49,8 @@ target it did not write as `<file>.bak.<timestamp>`. Two environment
 variables personalise the installed copies: `AGENT_GH_OWNER` (the GitHub owner
 in the pre-approved `gh` commands, default `linsalrob`) and
 `AGENT_HANDOFF_REPO` (where the `ask-chatgpt` / `ask-claude` skills push
-evidence bundles, default `$AGENT_GH_OWNER/agent-handoffs`). Export them in
+evidence bundles; if unset, handoffs are disabled and those skills are not
+installed). Export them in
 `~/.bashrc` so the `post-merge` hook uses them too.
 
 Wherever this file says **the agent**, it means whichever CLI coding agent is
