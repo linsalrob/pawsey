@@ -31,10 +31,11 @@ answer it, and consider adding the command to an allowlist (see the
 
 ### Context7 MCP
 
-As of 2026-08-26, no MCP servers are configured for this Claude Code account
-(`mcpServers` is empty). Treat the shared base's Context7 guidance as
-inactive until an MCP config actually wires it up — fall back to official
-version-matched documentation in the meantime.
+This repo does not configure any MCP servers, so whether Context7 is
+available depends on the user's own Claude Code setup. Use the shared base's
+Context7 guidance only when Context7 tools are actually available in the
+current session; otherwise fall back to official version-matched
+documentation.
 
 ### Claude Code's built-in systems
 

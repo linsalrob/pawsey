@@ -43,6 +43,15 @@ agent's next session. `build.sh` also wires up a `post-merge` git hook
 later `git pull` reinstalls automatically — a fresh checkout (e.g. after a
 scratch purge) still needs one manual `agents/build.sh` run to bootstrap it.
 
+Other users can install this into their own home directory by running
+`agents/build.sh` from their own clone. It backs up any existing install
+target it did not write as `<file>.bak.<timestamp>`. Two environment
+variables personalise the installed copies: `AGENT_GH_OWNER` (the GitHub owner
+in the pre-approved `gh` commands, default `linsalrob`) and
+`AGENT_HANDOFF_REPO` (where the `ask-chatgpt` / `ask-claude` skills push
+evidence bundles, default `$AGENT_GH_OWNER/agent-handoffs`). Export them in
+`~/.bashrc` so the `post-merge` hook uses them too.
+
 Wherever this file says **the agent**, it means whichever CLI coding agent is
 currently executing — Codex CLI, Claude Code, or another agent added later
 with its own `AGENTS.<name>.md` overlay. Content specific to one agent

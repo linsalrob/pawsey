@@ -13,8 +13,25 @@
 # anything under skills/. This script also wires up a post-merge git hook
 # (see hooks/post-merge) so it reruns itself automatically after future
 # `git pull`s — you only need to run it by hand once per fresh checkout.
+#
+# Other users can run this from their own clone. Two settings personalise the
+# installed copies (export them in ~/.bashrc so the post-merge hook sees them
+# too):
+#   AGENT_GH_OWNER      GitHub owner used in the pre-approved `gh` commands
+#                       (default: linsalrob)
+#   AGENT_HANDOFF_REPO  repo the ask-chatgpt / ask-claude skills push evidence
+#                       bundles to (default: $AGENT_GH_OWNER/agent-handoffs)
+#
+# Before overwriting an install target, any existing file that this script
+# did not write (or that has been edited since) is backed up alongside it as
+# <file>.bak.<timestamp>. What this script last wrote is recorded, with
+# checksums, in ~/.config/pawsey-agents/installed.sha256.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+AGENT_GH_OWNER="${AGENT_GH_OWNER:-linsalrob}"
+AGENT_HANDOFF_REPO="${AGENT_HANDOFF_REPO:-$AGENT_GH_OWNER/agent-handoffs}"
+echo "GitHub owner: $AGENT_GH_OWNER    handoff repo: $AGENT_HANDOFF_REPO"
 
 echo "Removing any leftover symlinks at install targets..."
 for l in ~/.codex/AGENTS.md ~/.claude/CLAUDE.md ~/.claude/AGENTS.md ~/.claude/skills; do
@@ -31,12 +48,40 @@ for skill_dir in skills/*/; do
     fi
 done
 
+manifest=~/.config/pawsey-agents/installed.sha256
+mkdir -p "$(dirname "$manifest")"
+touch "$manifest"
+stamp=$(date +%Y%m%d-%H%M%S)
+
 install_file() {
-    local src="$1" dst="$2"
+    local src="$1" dst="$2" cur recorded
     mkdir -p "$(dirname "$dst")"
+    # Back up an existing file unless it is identical to what we're about to
+    # install, or is exactly what this script installed last time.
+    if [ -f "$dst" ] && ! cmp -s "$src" "$dst"; then
+        cur=$(sha256sum "$dst" | cut -d' ' -f1)
+        recorded=$(awk -F'\t' -v p="$dst" '$2 == p { print $1 }' "$manifest")
+        if [ "$cur" != "$recorded" ]; then
+            cp -p "$dst" "$dst.bak.$stamp"
+            echo "  backed up $dst -> $dst.bak.$stamp"
+        fi
+    fi
     rm -f "$dst"
     cp "$src" "$dst"
+    {
+        awk -F'\t' -v p="$dst" '$2 != p' "$manifest"
+        printf '%s\t%s\n' "$(sha256sum "$dst" | cut -d' ' -f1)" "$dst"
+    } > "$manifest.tmp"
+    mv "$manifest.tmp" "$manifest"
     echo "Installed $dst"
+}
+
+# Substitute the per-user GitHub owner and handoff repo into a source file.
+personalise() {
+    sed -e "s#linsalrob/agent-handoffs#${AGENT_HANDOFF_REPO}#g" \
+        -e "s#--repo linsalrob/#--repo ${AGENT_GH_OWNER}/#g" \
+        -e "s#repos/linsalrob/#repos/${AGENT_GH_OWNER}/#g" \
+        "$1"
 }
 
 # --- AGENTS.md (Codex) / CLAUDE.md (Claude Code) ---
@@ -50,25 +95,27 @@ build_combined() {
         printf '<!-- INSTALLED FILE — do not edit directly.\n'
         printf '     Source: agents/AGENTS.md + agents/%s in linsalrob/pawsey.\n' "$overlay"
         printf '     Edit those, commit, push, then rerun agents/build.sh. -->\n\n'
-        cat AGENTS.md
+        personalise AGENTS.md
         printf '\n\n'
-        cat "$overlay"
+        personalise "$overlay"
     } > "$out"
 }
 
 build_combined AGENTS.codex.md  "$tmp/AGENTS.codex.md"
 build_combined AGENTS.claude.md "$tmp/CLAUDE.md"
+personalise AGENTS.md > "$tmp/AGENTS.md"
 
 install_file "$tmp/AGENTS.codex.md" ~/.codex/AGENTS.md
 install_file "$tmp/CLAUDE.md"       ~/.claude/CLAUDE.md
-install_file AGENTS.md              ~/.claude/AGENTS.md   # plain shared base, manual reference only
+install_file "$tmp/AGENTS.md"       ~/.claude/AGENTS.md   # plain shared base, manual reference only
 
 # --- Skills ---
 
 for skill_dir in skills/*/; do
     name=$(basename "$skill_dir")
-    install_file "$skill_dir/SKILL.md" ~/.codex/skills/"$name"/SKILL.md
-    install_file "$skill_dir/SKILL.md" ~/.claude/skills/"$name"/SKILL.md
+    personalise "$skill_dir/SKILL.md" > "$tmp/$name.SKILL.md"
+    install_file "$tmp/$name.SKILL.md" ~/.codex/skills/"$name"/SKILL.md
+    install_file "$tmp/$name.SKILL.md" ~/.claude/skills/"$name"/SKILL.md
 done
 
 # --- Git hook: auto-reinstall after `git pull` ---
