@@ -2,14 +2,14 @@
 
 Everything above this heading is the shared base (`AGENTS.md`), common to
 every CLI agent. Everything from here down is Claude-Code-specific and is
-only appended when building `generated/CLAUDE.md` (see the "Scope and
-provenance" section above). Edit this file, not the shared base, for
+only appended when `build.sh` builds the installed `~/.claude/CLAUDE.md`
+(see the "Scope and provenance" section above). Edit this file, not the shared base, for
 anything that applies to Claude Code and no other agent.
 
 Claude Code auto-loads `~/.claude/CLAUDE.md` as global user memory — it does
 **not** auto-load `AGENTS.md`. That's the entire reason this split exists:
-`generated/CLAUDE.md` (shared base + this file) is what actually gets
-symlinked to `~/.claude/CLAUDE.md` so this policy is picked up automatically
+`build.sh` installs the shared base + this file as a real copy at
+`~/.claude/CLAUDE.md`, so this policy is picked up automatically
 at the start of every session, instead of only when someone tells Claude to
 go read `AGENTS.md` by hand.
 

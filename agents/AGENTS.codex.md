@@ -2,8 +2,8 @@
 
 Everything above this heading is the shared base (`AGENTS.md`), common to
 every CLI agent. Everything from here down is Codex-CLI-specific and is only
-appended when building `generated/AGENTS.codex.md` (see the "Scope and
-provenance" section above). Edit this file, not the shared base, for anything
+appended when `build.sh` builds the installed `~/.codex/AGENTS.md` (see the
+"Scope and provenance" section above). Edit this file, not the shared base, for anything
 that applies to Codex CLI and no other agent.
 
 For the shared base's `<AGENT>` placeholders (used in the "External AI

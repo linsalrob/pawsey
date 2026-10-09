@@ -261,6 +261,24 @@ For example:
 ```bash
 sbatch --wait run_vamb.slurm
 
+# After the job completes:
+cat logs/vamb.out
+cat logs/vamb.err
+ls -lh results/
+```
+
+Long queueing and execution times are normal on the cluster. Do not treat a long-running `sbatch --wait` command as a failure merely because it takes substantial time to return.
+
+After the job completes:
+
+- inspect the Slurm stdout and stderr files;
+- inspect the expected output files;
+- verify that the job actually completed successfully;
+- continue the analysis without waiting for additional user instruction if the next step follows naturally from the scientific objective;
+- if the job failed, diagnose the failure, modify the job or analysis as appropriate, and resubmit it.
+
+Do not repeatedly poll `squeue` in a tight loop when `sbatch --wait` provides the required behaviour.
+
 ### Slurm job arrays: do not throttle
 
 When submitting Slurm job arrays, submit the complete array without an
@@ -325,25 +343,6 @@ ordinary scheduler resource management, for example:
 
 When such a constraint exists, document why the throttle is necessary rather
 than applying one by default.
-
-
-## After the job completes:
-cat logs/vamb.out
-cat logs/vamb.err
-ls -lh results/
-```
-
-Long queueing and execution times are normal on the cluster. Do not treat a long-running `sbatch --wait` command as a failure merely because it takes substantial time to return.
-
-After the job completes:
-
-- inspect the Slurm stdout and stderr files;
-- inspect the expected output files;
-- verify that the job actually completed successfully;
-- continue the analysis without waiting for additional user instruction if the next step follows naturally from the scientific objective;
-- if the job failed, diagnose the failure, modify the job or analysis as appropriate, and resubmit it.
-
-Do not repeatedly poll `squeue` in a tight loop when `sbatch --wait` provides the required behaviour.
 
 ## Jobs with predetermined downstream steps
 
@@ -1039,6 +1038,30 @@ Ask first unless the operation is clearly and explicitly authorized within the c
 - When parallelising, respect scheduler allocations and derive thread or process counts from the execution environment where appropriate.
 - On shared systems, avoid uncontrolled parallelism, excessive temporary storage, or unnecessary duplicate data.
 - Report assumptions affecting biological, statistical, or computational interpretation.
+
+### Reference databases
+
+The global source for shared reference databases on this system is
+`/scratch/references` (genomes, BLAST, Kraken2, BUSCO, InterProScan, Bakta,
+AlphaFold, ColabFold, and others). It is maintained centrally and read-only to
+ordinary users.
+
+- Before downloading or building a reference database, check
+  `/scratch/references` for an existing copy, and use it in place rather than
+  duplicating it into project or scratch space.
+- Discover what is available each time with `ls /scratch/references` (and the
+  relevant subdirectory); do not rely on a remembered or hardcoded list. The
+  contents change, and many directories are versioned by name (for example
+  `kraken_dec2025`, `colabfold_jun2026`).
+- Where several versions of the same database exist, choose deliberately: check
+  that the version matches the tool version that will read it (see "Installing
+  scientific software"), and prefer the newest compatible one unless the
+  analysis needs consistency with earlier results.
+- Read any `README`, `readme.txt`, `manifest.txt`, or version file in the chosen
+  directory, and record the exact path and version used.
+- If a needed database is missing or outdated, build it in project space
+  (or the location the user names) and tell the user, rather than attempting to
+  write to `/scratch/references`.
 
 ### Python figures and visualisation
 
