@@ -31,9 +31,15 @@ plassembler download -d $PLASSEMBLER_DB
 echo "Installing bakta and dnaapler"
 mamba install --yes bakta dnaapler
 
-echo "Installing bakta databases"
-
-bakta_db download --output ~/Databases/bakta
+# bakta_run.slurm uses the shared copy in /scratch/references; only download a
+# personal one if that is missing.
+if [[ -s /scratch/references/bakta/db/bakta.db ]]; then
+	echo "Using the shared bakta database:"
+	cat /scratch/references/bakta/db/version.json
+else
+	echo "Installing bakta databases"
+	bakta_db download --output ~/Databases/bakta
+fi
 
 mamba deactivate
 
@@ -270,9 +276,14 @@ foldseek version
 echo "Checking aria2c"
 aria2c --version
 
-echo "Installing baktfold databases"
-baktfold install -d ~/Databases/baktfold_db -t 8
-baktfold install -d ~/Databases/baktfold_db --foldseek-gpu
+# baktfold_run.slurm uses the shared copy in /scratch/references
+if [[ -d /scratch/references/baktfold_db ]]; then
+	echo "Using the shared baktfold database in /scratch/references/baktfold_db"
+else
+	echo "Installing baktfold databases"
+	baktfold install -d ~/Databases/baktfold_db -t 8
+	baktfold install -d ~/Databases/baktfold_db --foldseek-gpu
+fi
 
 
 echo "Done. Baktfold installed at: ${VENV_DIR}"
