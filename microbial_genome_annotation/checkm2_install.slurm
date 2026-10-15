@@ -15,6 +15,10 @@
 # Installed into its own environment. The DIAMOND database is downloaded into
 # ~/Databases/checkm2 rather than the default under $HOME/databases, so it sits
 # with the other reference data and survives rebuilding the environment.
+#
+# A shared copy of the same database (v3, md5 4db58455c51ff15804b6b8e19ff99f58)
+# is at /scratch/references/VEBA-DB_v9/Classify/CheckM2/uniref100.KO.1.dmnd;
+# see the README for pointing the environment at it instead of downloading.
 
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
