@@ -15,8 +15,8 @@
 set -euo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
-if [[ $# != 2 ]]; then
-	echo "$0 <nanopore reads> <output directory> <read type (ont-10)>" >&2;
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+	echo "$0 <nanopore reads> <output directory> [read type (default ont_r10)]" >&2;
 	exit 2;
 fi
 
