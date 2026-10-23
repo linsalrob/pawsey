@@ -162,6 +162,23 @@ the database lands in the conda environment
 but still present in v2.0.0). The install script uses the correct order and
 keeps a relocate-and-symlink guard in case that behaviour changes.
 
+### CheckM2 database
+
+There is no need to download the CheckM2 database: the copy at
+`/scratch/references/VEBA-DB_v9/Classify/CheckM2/uniref100.KO.1.dmnd` is the
+current one, CheckM2 DB v3 ([Zenodo 14897628](https://zenodo.org/records/14897628)).
+Its md5, `4db58455c51ff15804b6b8e19ff99f58`, matches the file extracted from
+the Zenodo tarball (checked 2026-10-15). Zenodo publishes only the md5 of the
+tarball, so the `.dmnd` md5 above is the one to compare against. To use it,
+point the environment at it:
+
+```
+mamba env config vars set --prefix /scratch/${PAWSEY_PROJECT}/${USER}/software/miniconda3/checkm2 \
+    CHECKM2DB=/scratch/references/VEBA-DB_v9/Classify/CheckM2/uniref100.KO.1.dmnd
+```
+
+`checkm2_install.slurm` still downloads its own copy into `~/Databases/checkm2`.
+
 ## 2. Rearrange using [dnaapler](https://github.com/gbouras13/dnaapler)
 
 ```

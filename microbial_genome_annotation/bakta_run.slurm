@@ -22,7 +22,10 @@ eval "$(mamba shell hook --shell bash)"
 CONDAENV=microbial_annotations
 mamba activate /scratch/pawsey1018/edwa0468/software/miniconda3/$CONDAENV
 
-BAKTA_DB=/scratch/pawsey1018/edwa0468/Databases/bakta/db
+# Shared, centrally maintained copy (read-only, not purged). Override with
+# BAKTA_DB=... sbatch ... to use a personal copy instead.
+BAKTA_DB=${BAKTA_DB:-/scratch/references/bakta/db}
+[[ -s "$BAKTA_DB/bakta.db" ]] || { echo "Error: no bakta database at $BAKTA_DB" >&2; exit 1; }
 
 # bakta defaults to a single thread, which is hours per genome. Derive the
 # thread count from the allocation, the same way autocycler_run.slurm does.

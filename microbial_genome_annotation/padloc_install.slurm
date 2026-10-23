@@ -45,15 +45,21 @@ mkdir -p "$DB_DIR"
 padloc --data "$DB_DIR" --db-update
 
 # Guard in case the ordering behaviour changes again: if the database still
-# landed inside the environment, move it and symlink back.
+# landed inside the environment, move it and symlink back. Test for the compiled
+# HMM database itself, not just the directory: the conda package can ship an
+# empty data/ directory, and treating that as "the database landed here" would
+# delete the good copy in $DB_DIR and replace it with the empty one.
 PKG_DATA="$ENV_DIR/data"
-if [[ -d "$PKG_DATA" && ! -L "$PKG_DATA" ]]; then
+if [[ -s "$PKG_DATA/hmm/padlocdb.hmm" && ! -L "$PKG_DATA" && ! -s "$DB_DIR/hmm/padlocdb.hmm" ]]; then
 	echo "Database landed in $PKG_DATA despite --data; relocating" >&2
 	rm -rf -- "$DB_DIR"
 	mv "$PKG_DATA" "$DB_DIR"
 	ln -s "$DB_DIR" "$PKG_DATA"
 fi
 
+[[ -s "$DB_DIR/hmm/padlocdb.hmm" ]] || { echo "Error: no padlocdb.hmm in $DB_DIR" >&2; exit 1; }
+# Make the default location point at the database too, so --data is optional
+[[ -L "$PKG_DATA" ]] || { rm -rf -- "$PKG_DATA"; ln -s "$DB_DIR" "$PKG_DATA"; }
 echo "=== database contents ==="
 ls "$DB_DIR" | head
 du -sh "$DB_DIR"

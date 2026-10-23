@@ -84,7 +84,8 @@ else
 fi
 
 echo "=== defence systems found ==="
-csv=$(ls "$OUT"/*_padloc.csv 2>/dev/null | head -1)
+# PADLOC writes no CSV when it finds nothing, so ls fails; that is not an error
+csv=$(ls "$OUT"/*_padloc.csv 2>/dev/null | head -1 || true)
 if [[ -s "$csv" ]]; then
 	awk -F',' 'NR>1{print $3}' "$csv" | sort | uniq -c | sort -rn
 else

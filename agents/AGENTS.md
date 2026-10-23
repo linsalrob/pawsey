@@ -230,6 +230,137 @@ The explicit `--ntasks` setting is optional for a single-node, single-GPU job, w
 
 If an allocation omits the required task count, Slurm may reserve the GPUs and memory but only one 8-core chiplet per node. Subsequent `srun` steps may then fail with “More processors requested than permitted” or related completion errors.
 
+### Setonix lessons from large array workloads
+
+Learned the hard way on the LOGAN metagenome run (genome_entropy #102,
+October 2026). Check `sacct --format=JobID,AllocTRES,ElapsedRaw` on the
+first few jobs of any large campaign and confirm the billing is what you
+expect before submitting the rest.
+
+**CPU packing: billing follows the allocation, not the work.** A `work`
+job with `--cpus-per-task=64` is allocated 128 hardware threads and billed
+`billing=128` (128 SU per hour), the same as a whole node. Running 12
+mostly single-threaded tools inside it billed ~10.7 SU per process-hour.
+The 12 slots were busy throughout; the allocation was simply 10× bigger
+than the work. For many independent single-threaded tasks (Prodigal,
+Python parsers, per-sample scripts):
+
+- pack as many concurrent tasks per allocation as memory allows. Measure
+  peak RSS per task on a pilot (`sacct ... MaxRSS`) and size concurrency
+  from the worst case, not the median;
+- or request small allocations (a few cores, matching memory) and let the
+  scheduler pack them. Do not request a half or whole node for 12 serial
+  processes;
+- deal list items to array elements round-robin, not in contiguous
+  blocks. Input lists sorted by size otherwise put all the largest
+  items in the same elements. Here 19 elements hit the 12 h limit, while
+  each of their items took 30–40 min when run alone.
+
+**Filesystem slowdowns: `/scratch` (Lustre) can degrade for hours.** Reads
+fell to ~12–20 MB/s for about an hour. A Python/ROCm conda environment
+on `/scratch` holds several GB of shared libraries (`libtorch*`,
+`librccl`, MIOpen, …). Every process that imports it pages those in, so
+32 encoder processes starting together on one GPU node read ~200 GB
+between them. Every GPU stream started in that window stalled ~2.7 h on its
+first work unit, then ran at full speed. Mitigations:
+
+- before launching many processes on a node, warm the page cache once.
+  The processes then share it:
+  `find "$ENV/lib" -name '*.so*' -size +10M -print0 | xargs -0 cat > /dev/null`
+- keep worker processes alive across work units (a persistent pool), so
+  the environment loads once per node rather than once per unit;
+- a process stuck in `cl_sync_io_wait` (see `ps -o wchan`, or
+  `srun --jobid=<id> --overlap ps ...` on the node) is waiting on Lustre,
+  not computing. Do not misread a slow first unit as a data-dependent
+  slowdown until a control run on the same node rules this out.
+
+**Inodes, not bytes, run out first on `/scratch`.** The per-user quota
+is **1,000,000 files** (`lfs quota -u $USER /scratch`), even where the
+byte quota is effectively unlimited. Two 25k-accession tranches with a few
+files each (state JSON, a lock file, a log, work tables, chunk manifests)
+reached it. Every write then failed with `Errno 122 Disk quota exceeded`:
+outputs, uploads, orchestrators, even Slurm's own log files. Jobs died
+within seconds with exit codes like `0:53`. Budget files per work unit
+before scaling:
+
+- check `lfs quota -u $USER /scratch` (the `files` column) before and
+  during a campaign, and keep the planned file count well under the free
+  inodes;
+- use shared lock stripes (e.g. 256 lock files hashed by key) rather than
+  one lock file per item;
+- archive per-item logs into one tar.zst per array element. Pack small
+  per-item outputs into per-chunk bundles rather than leaving one directory
+  of small files per item.
+
+**`SBATCH_EXPORT=NONE` is set site-wide.** A job submitted from inside
+another job (an orchestrator, a pipeline driver) starts with a clean
+environment, not the parent's. Pass anything the child needs
+explicitly (`sbatch --export=NONE,VAR=value,...`). Otherwise a "test" run
+under a non-default root silently acts on production defaults.
+
+### Structure prediction and other GPU ports on Setonix
+
+George Bouras maintains ports of biomolecular structure-prediction models to
+Setonix's MI250X GPUs at **<https://github.com/gbouras13/setonix-ports>**. He
+adds to it regularly, so **check the repository's current README rather than
+this list** before concluding a model is unavailable or porting one yourself:
+
+```bash
+gh api repos/gbouras13/setonix-ports/readme --jq .content | base64 -d
+```
+
+At the time of writing it covers AlphaFold 3 (`af3jax`), Boltz-2, Protenix,
+OpenDDE, ESMFold2, ColabFold, ProteinMPNN and a HIP build of MMseqs2, with
+OpenFold3 flagged as coming. Each port is a container published to ghcr.io by
+GitHub Actions, carrying the upstream model plus the patches, launcher and
+size-dependent defaults it needs to be correct and fast on gfx90a.
+
+**Prefer a port over a hand-rolled install.** These models fail on AMD in ways
+that are not obvious and not always loud. Two examples from the repository: a
+stock Boltz-2 pip install imports `cuequivariance_torch`, an NVIDIA-only fused
+kernel, and dies; and above ~4,314 tokens hipBLASLt's default algorithm computes
+AlphaFold 3's diffusion `pair_logits_projection` **wrongly, with no error**, so
+chains misfold silently. The ports carry the fixes and name the digest they were
+validated with.
+
+Using one:
+
+```bash
+# pull in a job, not on a login node
+sbatch --account=$PAWSEY_PROJECT slurm/pull_image.sbatch \
+    ghcr.io/gbouras13/setonix-ports/af3jax:main /scratch/$PAWSEY_PROJECT/$USER/singularity
+module load singularity/4.1.0-nohost      # binds /scratch, /software, /data/references
+singularity exec $SIF af3jax check        # confirms GPU libraries came from the image
+```
+
+- **Never pass `--rocm`.** It binds the host's ROCm 6.3.0 libraries over the
+  image's 7.2.4 ones, whose sonames match.
+- Images contain **no model weights** (except ProteinMPNN, whose weights are MIT
+  and part of upstream). Bind your own.
+
+### AlphaFold 3 parameters
+
+AlphaFold 3's code is open but its weights are not redistributable: DeepMind
+grants them per request, so they are **not** on `/scratch/references`, which
+carries only the AF3 sequence databases and AF2 parameters. Robert holds a
+granted copy.
+
+- On Setonix, already staged and ready to use:
+  `/scratch/pawsey1018/edwa0468/af3_params/` (the directory `--model_dir` wants).
+  Prefer this over `$HOME`: `singularity/4.1.0-nohost` binds `/scratch`,
+  `/software` and `/data/references`, and home may not be bound.
+- Working copy: `~/Projects/af3.bin.zst`, byte-identical to the staged one.
+- Durable copy: `rclone A18:dbs/af3.bin.zst` (uploaded 2026-10-23, verified
+  with `rclone check` against the working copy). If the staged and working
+  copies are both gone, restore from there; do not re-request or re-download
+  the weights. `rclone` is a module, not on the default `PATH`:
+  `module load rclone/1.68.1`. Acacia bucket names are global: `A18:models`
+  belongs to another account and returns 403, so do not use it.
+- `af3jax` wants the **directory** holding `af3.bin.zst`, not the file:
+  `af3jax predict --model_dir <dir> ...`.
+- These parameters are licensed per-grant and non-redistributable. Do not copy
+  them outside Robert's storage, into a container image, or into a repository.
+
 ### Autonomous job submission
 
 The agent may autonomously:
@@ -1072,6 +1203,8 @@ ordinary users.
 - If a needed database is missing or outdated, build it in project space
   (or the location the user names) and tell the user, rather than attempting to
   write to `/scratch/references`.
+- `/scratch/references` holds AlphaFold 3's sequence databases but **no AF3 model
+  parameters**, which are not redistributable. See "AlphaFold 3 parameters".
 
 ### Python figures and visualisation
 

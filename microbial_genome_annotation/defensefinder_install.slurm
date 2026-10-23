@@ -41,6 +41,10 @@ python -m pip install mdmparis-defense-finder
 
 defense-finder --version || true
 
+# A scratch purge deletes the model files but leaves the directory tree, which
+# defense-finder then reports as a corrupted install. Remove empty directories
+# only, so a partial or complete set of models is never deleted.
+[[ -d "$DB_DIR" ]] && find "$DB_DIR" -depth -type d -empty -delete
 mkdir -p "$DB_DIR"
 echo "Downloading DefenseFinder models into $DB_DIR"
 defense-finder update --models-dir "$DB_DIR"
