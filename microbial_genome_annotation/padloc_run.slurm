@@ -30,7 +30,9 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 eval "$(mamba shell hook --shell bash)"
 mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/padloc
-DB_DIR="$HOME/Databases/padloc"
+# Shared read-only copy first (identical to padloc_install.slurm's download); ~/Databases is on purgeable /scratch.
+DB_DIR="${PADLOC_DB:-/scratch/references/padloc_db_v2.0.0}"
+[[ -d "$DB_DIR" ]] || DB_DIR="$HOME/Databases/padloc"
 
 [[ -d "$DB_DIR" ]] || { echo "Error: PADLOC database missing at $DB_DIR; run padloc_install.slurm" >&2; exit 1; }
 

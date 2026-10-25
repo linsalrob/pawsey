@@ -162,6 +162,13 @@ the database lands in the conda environment
 but still present in v2.0.0). The install script uses the correct order and
 keeps a relocate-and-symlink guard in case that behaviour changes.
 
+The run scripts now use the shared, read-only copies first, because `~/Databases` sits on
+/scratch and is purged: `/scratch/references/padloc_db_v2.0.0` and
+`/scratch/references/defensefinder` (models 3.1.0). Both were checked identical to the
+downloaded copies on 2026-10-26. Set `PADLOC_DB` or `DEFENSEFINDER_DB` to override; the
+`~/Databases` copies are the fallback. `gtdbtk_install.slurm` likewise uses
+`/scratch/references/gtdb_release232` when it exists instead of downloading 60 GB.
+
 ### CheckM2 database
 
 There is no need to download the CheckM2 database: the copy at

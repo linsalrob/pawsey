@@ -32,6 +32,8 @@ ENV_DIR="/scratch/${PAWSEY_PROJECT}/${USER}/software/miniconda3/${CONDAENV}"
 DB_ROOT="$HOME/Databases/GTDB"
 DB_DIR="$DB_ROOT/release${RELEASE}"
 TARBALL="$DB_ROOT/$(basename "$URL")"
+# A shared, read-only copy of the release is used instead of downloading when it exists.
+SHARED_DB="/scratch/references/gtdb_release${RELEASE}"
 
 eval "$(mamba shell hook --shell bash)"
 if [[ -e "$ENV_DIR" || -L "$ENV_DIR" ]]; then
@@ -43,6 +45,10 @@ mamba create -y --prefix="$ENV_DIR" -c conda-forge -c bioconda "gtdbtk=${GTDBTK_
 mamba activate "$ENV_DIR"
 gtdbtk --version
 
+if [[ -s "$SHARED_DB/metadata/metadata.txt" ]]; then
+	echo "Using the shared R${RELEASE} at $SHARED_DB; nothing to download"
+	DB_DIR="$SHARED_DB"
+else
 mkdir -p "$DB_ROOT"
 echo "Downloading $URL"
 # -c resumes a partial download if the job is rerun
@@ -63,6 +69,7 @@ fi
 rm -rf -- "$DB_DIR"
 mkdir -p "$DB_DIR"
 pigz -dc -p "${SLURM_CPUS_PER_TASK:-4}" "$TARBALL" | tar -x -C "$DB_DIR" --strip-components=1
+fi
 
 mamba env config vars set --prefix "$ENV_DIR" GTDBTK_DATA_PATH="$DB_DIR"
 mamba deactivate

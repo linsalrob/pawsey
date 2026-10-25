@@ -36,7 +36,10 @@ OUT=$2
 
 eval "$(mamba shell hook --shell bash)"
 mamba activate /scratch/$PAWSEY_PROJECT/$USER/software/miniconda3/defensefinder
-DB_DIR="$HOME/Databases/defensefinder"
+# Shared read-only copy first (models 3.1.0, identical to defensefinder_install.slurm's download);
+# ~/Databases is on purgeable /scratch.
+DB_DIR="${DEFENSEFINDER_DB:-/scratch/references/defensefinder}"
+[[ -d "$DB_DIR" ]] || DB_DIR="$HOME/Databases/defensefinder"
 
 [[ -d "$DB_DIR" ]] || { echo "Error: models missing at $DB_DIR; run defensefinder_install.slurm" >&2; exit 1; }
 
