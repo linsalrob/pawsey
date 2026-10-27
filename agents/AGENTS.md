@@ -298,6 +298,12 @@ environment, not the parent's. Pass anything the child needs
 explicitly (`sbatch --export=NONE,VAR=value,...`). Otherwise a "test" run
 under a non-default root silently acts on production defaults.
 
+**Setonix has no `/usr/bin/time`** (neither login nor compute nodes). A job
+script calling `/usr/bin/time -v cmd` fails at that line with exit 127
+("No such file or directory"). Time a step with bash's
+`time` keyword or `$SECONDS`, and get peak memory from
+`sacct -j <id> --format=JobID,MaxRSS,Elapsed` after the job ends.
+
 ### Structure prediction and other GPU ports on Setonix
 
 George Bouras maintains ports of biomolecular structure-prediction models to
