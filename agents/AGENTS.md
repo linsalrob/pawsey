@@ -876,6 +876,18 @@ install or a crash, spend a minute checking whether it has been reported.
   Filing an issue on a third-party repository is an outward-facing action:
   draft it, confirm with the user, and check for duplicates first.
 
+### Tool preferences
+
+- **Avoid the BBTools suite** (BBMap, BBDuk, BBNorm, BBMerge, Tadpole,
+  reformat.sh, clumpify.sh, and the rest of the `*.sh` wrappers). They are
+  written in Java and tend to be very memory hungry, which makes them a poor
+  fit for packed or shared HPC allocations. Prefer other established tools for
+  the same job, for example fastp for trimming and adapter removal, minimap2 or
+  bowtie2/bwa-mem2 for read mapping, seqkit for format conversion and
+  subsampling, and KMC or Jellyfish for k-mer counting.
+  Use a BBTools program only when no reasonable alternative exists, and state
+  why in the code or the final report.
+
 ## Editing files
 
 - Make the smallest safe change that solves the issue.
