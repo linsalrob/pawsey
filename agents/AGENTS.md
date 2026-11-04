@@ -888,6 +888,36 @@ install or a crash, spend a minute checking whether it has been reported.
   Use a BBTools program only when no reasonable alternative exists, and state
   why in the code or the final report.
 
+### Conda environments on Setonix
+
+A single conda or pip environment is typically 10k–60k files, so environments
+are the largest consumer of inodes. Both places to keep them are tight:
+
+- **`/software/projects/$PAWSEY_PROJECT`** holds a few **permanent**
+  environments, the ones in regular use. It is close to full and has a
+  *smaller* inode quota than `/scratch`, so do not move environments there to
+  relieve `/scratch`, and do not add new environments there casually.
+- **`/scratch/$PAWSEY_PROJECT/$USER`** (e.g. `software/envs/`,
+  `software/miniconda3/`) holds **temporary** environments. Treat them as
+  disposable: build one when a task needs it, delete it when the task is done
+  or inodes run short, and rebuild it from its recipe later. Keep the recipe
+  (an `environment.yml`, install script, or the exact `mamba create` command)
+  in the relevant repository so a rebuild is cheap. Scratch is also purged
+  after 21 days.
+
+When inodes run short (see "Inodes, not bytes, run out first" above), the
+cheapest wins are usually package caches (`conda clean --all -y`, stale
+`pkgs` directories no longer listed in `pkgs_dirs`, pip caches), leftover
+`*.purged-*` / `*.purge-broken-*` / `*.incomplete-*` environment copies, and
+unused pip install trees. Files in a conda package cache that are hardlinked
+into a live environment (`find <dir> -type f -links +1`) do not free inodes
+when deleted, so count only the unlinked ones.
+
+Agents are **approved to delete a conda environment in
+`/software/projects/$PAWSEY_PROJECT` once they have built and checked a
+working replacement for it** (e.g. a rebuilt or upgraded version of the same
+environment). Do not delete one there that has no replacement without asking.
+
 ## Editing files
 
 - Make the smallest safe change that solves the issue.
