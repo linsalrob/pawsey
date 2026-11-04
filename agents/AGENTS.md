@@ -888,6 +888,33 @@ install or a crash, spend a minute checking whether it has been reported.
   Use a BBTools program only when no reasonable alternative exists, and state
   why in the code or the final report.
 
+### Rust toolchain on Setonix
+
+The `rust/*` modules (e.g. `rust/1.97.1`) provide only `cargo` and `rustc`,
+with **no `rustfmt` or `clippy`**, so `cargo fmt` and `cargo clippy` fail with
+"no such command". The Spack `rust-bootstrap` builds carry the full toolchain
+(`cargo-fmt`, `rustfmt`, `cargo-clippy`, `clippy-driver`, `rustdoc`,
+`rust-analyzer`). They are not exposed as modules, so prepend one to `PATH`:
+
+```bash
+export PATH=/software/setonix/2026.11/software/linux-sles15-zen3/gcc-14.2.0/rust-bootstrap-1.96.0-e2fjfzc2rkbhgejgu46fjhwu5hsmxi54/bin:$PATH
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+- The hashed path changes with each Setonix software stack. If it is gone,
+  find the current one with
+  `ls -d /software/setonix/*/software/linux-sles15-zen3/*/rust-bootstrap-*/bin`
+  and pick one that contains `rustfmt`.
+- `module load rust/...` needs a `gcc-native/*` module loaded first, and in a
+  non-interactive agent shell it may not take effect at all. Prepending the
+  install's `bin` directory to `PATH` is more reliable.
+- Run the repository's CI format and lint commands locally before pushing.
+  Otherwise a Rustfmt or Clippy failure only shows up in CI.
+- Do not install rustup into `$HOME` for this. If a newer toolchain is
+  genuinely needed, put it under `/scratch` or `/software/projects` and note
+  that `/scratch` is purged.
+
 ## Editing files
 
 - Make the smallest safe change that solves the issue.
