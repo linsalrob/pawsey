@@ -1255,6 +1255,38 @@ Ask first unless the operation is clearly and explicitly authorized within the c
 - On shared systems, avoid uncontrolled parallelism, excessive temporary storage, or unnecessary duplicate data.
 - Report assumptions affecting biological, statistical, or computational interpretation.
 
+### Sequence identity: hash the sequence, not the ID
+
+A sequence ID (a FASTA header, gene or protein name, locus tag, even an
+accession pasted beside a sequence) is a label, not an identity. The same name
+routinely refers to different sequences: `Gp5` is both T7 DNA polymerase (704
+aa) and an unrelated 61-aa peptide, two different Ung inhibitors are both called
+`p56`, and a sequence labelled `MciZ_4U39` that was not MciZ went unnoticed for
+a month because the name looked right. A join or lookup on such a name returns
+the wrong molecule without any error.
+
+- Wherever practical, identify a sequence by a hash of the sequence itself
+  (`md5sum`, SHA-256 or similar) and use that as the key for joins,
+  deduplication, caching and cross-referencing results. Treat names as
+  metadata for humans.
+- Normalise before hashing, and record how: at minimum uppercase and remove
+  whitespace and line breaks. State whether a trailing stop (`*`) is dropped.
+  Do not strip alignment gaps (`-`, `.`): a gapped string is an alignment row,
+  not a sequence, so reject it instead of keying it. Keep ambiguity codes
+  (`X`, `N`, …); dropping them merges distinct sequences.
+- A truncation, construct or variant is a different sequence and should get a
+  different hash. Do not collapse it onto the parent by name.
+- When combining tables that are keyed by name, map each name to its sequence
+  hash first. Treat a name that resolves to more than one hash as an error to
+  resolve by hand before using the table. One hash with several names is
+  ordinary aliasing and is harmless.
+- Where a sequence is cited alongside an accession, check that the sequence
+  actually matches that accession rather than trusting either.
+- A reference implementation for proteins (`sq1_` + the first 16 hex digits of
+  SHA-256, with registry build/check tooling) is
+  `projects/phage_interactions/scripts/seqkey.py` in `linsalrob/agent-handoffs`
+  (added in agent-handoffs#39).
+
 ### Reference databases
 
 The global source for shared reference databases on this system is
