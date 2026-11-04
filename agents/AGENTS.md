@@ -914,7 +914,7 @@ into a live environment (`find <dir> -type f -links +1`) do not free inodes
 when deleted, so count only the unlinked ones.
 
 Agents are **approved to delete a conda environment in
-`/software/projects/$PAWSEY_PROJECT` once they have built and checked a
+`/scratch/$PAWSEY_PROJECT/$USER` once they have built and checked a
 working replacement for it** (e.g. a rebuilt or upgraded version of the same
 environment). Do not delete one there that has no replacement without asking.
 
