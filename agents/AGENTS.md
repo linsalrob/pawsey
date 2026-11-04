@@ -1111,9 +1111,8 @@ When network access is unavailable, report that authentication could not be veri
 
 When appropriate, retry `gh` outside the restricted sandbox or request network permission rather than asking the user to reauthenticate immediately.
 
-The GraphQL approval includes reading pull-request review threads and resolving a thread
-only after its actionable feedback has actually been addressed and the user has asked the
-agent to resolve outstanding review comments.  Posting `@codex review` is approved only for requesting a
+The GraphQL approval includes reading pull-request review threads, replying to them, and
+resolving a thread once its actionable feedback has been addressed (see below).  Posting `@codex review` is approved only for requesting a
 re-review of a pull request the user asked the agent to monitor.
 
 Some agents bundle their own repository-local GitHub helper scripts (for example, Codex
@@ -1121,10 +1120,16 @@ CLI's plugin-cache `gh-fix-ci` / `gh-address-comments` scripts). See that agent'
 (`AGENTS.codex.md`, etc.) for the approved paths — this is agent-specific tooling, not a
 general convention, so it isn't listed here.
 
-If the user has asked the agent to address PR review feedback, and a review thread
-has been addressed by the pushed change, the agent is pre-approved to mark that
-specific thread as resolved. Do not resolve informational, disputed, ambiguous,
-or unaddressed threads.
+**Whenever the agent addresses a GitHub review comment or review thread, it marks
+that thread as resolved**, without waiting to be asked. This applies to comments from
+people and from review bots (e.g. Codex). Once the change that addresses it is pushed:
+
+1. reply on the thread, saying what changed and naming the commit;
+2. resolve the thread (GraphQL `resolveReviewThread`).
+
+Do not leave addressed threads open for the user to close. Do not resolve
+informational, disputed, ambiguous, or unaddressed threads, or threads where the
+agent declined the suggestion: reply with the reasoning and leave them for the user.
 
 ## Node, npm, and npx commands approved
 
