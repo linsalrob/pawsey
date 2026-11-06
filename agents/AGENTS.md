@@ -1318,6 +1318,51 @@ ordinary users.
 - `/scratch/references` holds AlphaFold 3's sequence databases but **no AF3 model
   parameters**, which are not redistributable. See "AlphaFold 3 parameters".
 
+### Hash standalone FASTA inputs with HashFASTA before analysis
+
+FASTA identifiers are not unique: many phage proteins are called `gp5`, many
+contigs `node_1`, and merging files from different sources produces name
+collisions that silently corrupt downstream joins, lookups, and tables. To
+prevent this, **hash standalone FASTA inputs before analysis**: run each
+downloaded FASTA file through `hashfasta` before any analysis touches it, and
+use the hashed output, not the original.
+
+**If a FASTA is paired with a GFF, GTF, or other file that joins on its
+identifiers, do not hash it alone.** Keep the pair unchanged unless every
+linked file is remapped together and the mapping is preserved. Hashing only
+the FASTA breaks the join: PADLOC, for example, aborts when protein IDs do not
+match the GFF, and the original name kept in the header description is not a
+join key.
+
+- `hashfasta` is installed at
+  `/software/projects/$PAWSEY_PROJECT/$USER/bin/hashfasta` (on `PATH` via the
+  `~/software` symlink). If it is missing, get the
+  current release from <https://github.com/linsalrob/HashFASTA/releases>
+  (python-v0.2.1, 2026-11-05, at the time of writing; check for newer with
+  `gh api repos/linsalrob/HashFASTA/releases/latest --jq .tag_name`). Each
+  release has statically linked Linux binaries
+  (`hashfasta-X.Y.Z-linux-x86_64.tar.gz`, checked against `SHA256SUMS`); the
+  `hashfasta-rust`, `hashfasta-c` and `hashfasta-cpp` binaries in it behave
+  identically. `pip install hashfasta` also works.
+- Usage: `hashfasta INPUT [-o OUTPUT] [--threads N]`. `hashfasta x.fna.gz`
+  writes `x.hash.fasta.gz` beside the input. Input may be plain, gzip, bzip2
+  or xz; output is always gzip.
+- Each record becomes `>sha256_<hash of the sequence> [<original definition
+  line>]`, so the original name stays recoverable from the header. Keep the
+  downloaded original alongside the hashed file; do not delete it.
+- Identical sequences get identical identifiers, and duplicate records are
+  kept. Deduplicate deliberately if a tool requires unique IDs; do not assume
+  that two records with the same key came from the same source.
+- Sequences are uppercased. Lowercase soft-masking (e.g. repeat-masked genomes)
+  is lost, so run any step that depends on it on the original, and say so.
+- Some tools limit identifier length (the key is 71 characters). If a tool
+  rejects or truncates them, map to short IDs with an explicit, saved lookup
+  table rather than reverting to the original names.
+- This applies to sequences downloaded as analysis inputs (NCBI, ENA,
+  collaborator files, and the like). It does not apply to prebuilt reference
+  databases in `/scratch/references`, which are used in place.
+- Record the `hashfasta` version (release tag) used in the final report.
+
 ### Python figures and visualisation
 
 When creating scientific figures or exploratory visualisations in Python, use
