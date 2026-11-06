@@ -1286,14 +1286,21 @@ ordinary users.
 - `/scratch/references` holds AlphaFold 3's sequence databases but **no AF3 model
   parameters**, which are not redistributable. See "AlphaFold 3 parameters".
 
-### Hash downloaded FASTA files with HashFASTA before analysis
+### Hash standalone FASTA inputs with HashFASTA before analysis
 
 FASTA identifiers are not unique: many phage proteins are called `gp5`, many
 contigs `node_1`, and merging files from different sources produces name
 collisions that silently corrupt downstream joins, lookups, and tables. To
-prevent this, **every FASTA file downloaded for analysis is run through
-`hashfasta` before any analysis touches it**, and the analysis uses the hashed
-output, not the original.
+prevent this, **hash standalone FASTA inputs before analysis**: run each
+downloaded FASTA file through `hashfasta` before any analysis touches it, and
+use the hashed output, not the original.
+
+**If a FASTA is paired with a GFF, GTF, or other file that joins on its
+identifiers, do not hash it alone.** Keep the pair unchanged unless every
+linked file is remapped together and the mapping is preserved. Hashing only
+the FASTA breaks the join: PADLOC, for example, aborts when protein IDs do not
+match the GFF, and the original name kept in the header description is not a
+join key.
 
 - `hashfasta` is installed at
   `/software/projects/$PAWSEY_PROJECT/$USER/bin/hashfasta` (on `PATH` via the
