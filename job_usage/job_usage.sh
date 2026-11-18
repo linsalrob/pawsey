@@ -1,14 +1,15 @@
 #!/bin/bash -l
-# Usage: ./job_usage.sh <jobid> [--format text|csv|json] [--no-csv-header] [--quiet]
+# Usage: ./job_usage.sh <jobid> [--format text|csv|json] [--no-csv-header] [--quiet] [--cluster NAME]
 
 usage() {
-    echo "Usage: $0 <jobid> [--format text|csv|json] [--no-csv-header] [--quiet]"
+    echo "Usage: $0 <jobid> [--format text|csv|json] [--no-csv-header] [--quiet] [--cluster NAME]"
 }
 
 OUTPUT_FORMAT="text"
 CSV_INCLUDE_HEADER=1
 QUIET_MODE=0
 JOBID=""
+CLUSTER_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -30,6 +31,15 @@ while [[ $# -gt 0 ]]; do
             ;;
         --quiet|-q)
             QUIET_MODE=1
+            ;;
+        --cluster|-M)
+            shift
+            if [[ -z "$1" ]]; then
+                echo "Error: --cluster requires a cluster name." >&2
+                usage
+                exit 1
+            fi
+            CLUSTER_ARGS=(-M "$1")
             ;;
         --*)
             echo "Error: Unknown option '$1'." >&2
@@ -267,7 +277,7 @@ json_num_or_null() {
 FIELDS="JobID,Account,State,ExitCode,Partition,ReqCPUS,AllocCPUS,TotalCPU,ReqMem,AllocTRES,Timelimit,Elapsed,NNodes,AveRSS,NTasks,CPUtime,CPUTimeRAW,Submit,Start,End"
 
 # Force standard timestamp formatting so Submit/Start/End include date and time.
-JOB_DATA=$(SLURM_TIME_FORMAT=standard sacct -n -j "$JOBID" --format="$FIELDS" -P)
+JOB_DATA=$(SLURM_TIME_FORMAT=standard sacct "${CLUSTER_ARGS[@]}" -n -j "$JOBID" --format="$FIELDS" -P)
 
 # Check if job ID was found
 if [ -z "$JOB_DATA" ]; then
@@ -321,7 +331,18 @@ if [ -z "$nnodes" ]; then
 fi
 
 # Clean exit code
+# ExitCode is <code>:<signal>. A job killed by a signal reports code 0,
+# so report 128+signal (137 = SIGKILL) as the shell does. Slurm also puts
+# non-signal values there (0:125 for OUT_OF_MEMORY); report those as is.
+exit_signal=${exitcode#*:}
 exitcode=${exitcode%%:*}
+if [[ "$exitcode" == "0" && "$exit_signal" =~ ^[0-9]+$ && "$exit_signal" -gt 0 ]]; then
+    if (( exit_signal <= 64 )); then
+        exitcode=$((128 + exit_signal))
+    else
+        exitcode=$exit_signal
+    fi
+fi
 
 # --- CPU efficiency (common to all partitions) --- #
 # Convert elapsed and timelimit to hours

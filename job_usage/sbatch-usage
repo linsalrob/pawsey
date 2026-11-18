@@ -32,28 +32,30 @@ valid_format() { [[ "$1" =~ ^(text|csv|json|off)$ ]]; }
 
 ext_for() { case "$1" in csv) echo csv ;; json) echo json ;; *) echo txt ;; esac; }
 
-# --report ID FORMAT OUTPUT: run inside the follow-on job (or after --wait).
+# --report ID FORMAT OUTPUT [CLUSTER]: run inside the follow-on job (or
+# after --wait).
 report() {
-    local jobid=$1 format=$2 output=$3
-    local ids first=1 id
+    local jobid=$1 format=$2 output=$3 cluster=$4
+    local ids first=1 id cl=()
+    [[ -n "$cluster" ]] && cl=(--cluster "$cluster")
     # --export=NONE report jobs start with a minimal environment.
     export PATH="${PATH:+$PATH:}/usr/local/bin:/usr/bin:/bin"
     # Use <array id>_<task id> for array elements, not their raw ids: the
     # last element's raw id is the array id, which sacct expands to all.
-    mapfile -t ids < <(sacct -n -X -P -j "$jobid" --format=JobID 2>/dev/null | grep -E '^[0-9]+(_[0-9]+)?$' | sort -t_ -k1,1n -k2,2n -u)
+    mapfile -t ids < <(sacct ${cluster:+-M "$cluster"} -n -X -P -j "$jobid" --format=JobID 2>/dev/null | grep -E '^[0-9]+(_[0-9]+)?$' | sort -t_ -k1,1n -k2,2n -u)
     [[ ${#ids[@]} -eq 0 ]] && ids=("$jobid")
     for id in "${ids[@]}"; do
         local extra=()
         [[ "$format" == "csv" && $first -eq 0 ]] && extra=(--no-csv-header)
         "$HELPER" --jobid "$id" --format "$format" --output "$output" \
-            --script "$SCRIPT" --any-host "${extra[@]}"
+            --script "$SCRIPT" --any-host "${cl[@]}" "${extra[@]}"
         first=0
     done
 }
 
 if [[ "$1" == "--report" ]]; then
-    [[ $# -eq 4 ]] || die "usage: $0 --report JOBID FORMAT OUTPUT"
-    report "$2" "$3" "$4"
+    [[ $# -eq 4 || $# -eq 5 ]] || die "usage: $0 --report JOBID FORMAT OUTPUT [CLUSTER]"
+    report "$2" "$3" "$4" "$5"
     exit $?
 fi
 
@@ -115,6 +117,12 @@ fi
 out=$("$REAL_SBATCH" --parsable "${args[@]}")
 rc=$?
 jobid=${out%%;*}
+# With --clusters, sbatch prints "<id>;<cluster>"; every later lookup must
+# go to that cluster, not the local one.
+cluster=""
+[[ "$out" == *";"* ]] && cluster=${out#*;}
+CL=()
+[[ -n "$cluster" ]] && CL=(-M "$cluster")
 if [[ ! "$jobid" =~ ^[0-9]+$ ]]; then
     [[ -n "$out" ]] && echo "$out"
     exit $rc
@@ -136,7 +144,7 @@ if [[ -z "$FORMAT" || -z "$OUTPUT" ]]; then
                 --job-usage-output=*) [[ -z "$OUTPUT" ]] && OUTPUT=${w#*=} ;;
             esac
         done
-    done < <(scontrol write batch_script "$jobid" - 2>/dev/null | grep -E '^#JOB_USAGE([[:space:]]|$)')
+    done < <(scontrol "${CL[@]}" write batch_script "$jobid" - 2>/dev/null | grep -E '^#JOB_USAGE([[:space:]]|$)')
     [[ -n "$OUTPUT" && -z "$FORMAT" ]] && FORMAT=text
     if [[ -n "$FORMAT" ]] && ! valid_format "$FORMAT"; then
         echo "sbatch-usage: ignoring #JOB_USAGE format '$FORMAT'" >&2
@@ -146,7 +154,7 @@ fi
 [[ -z "$FORMAT" || "$FORMAT" == "off" ]] && exit $rc
 
 # --- Work out where the report goes --- #
-job_info=$(scontrol show job -o "$jobid" 2>/dev/null | grep -E "^JobId=$jobid( |$)" | head -1)
+job_info=$(scontrol "${CL[@]}" show job -o "$jobid" 2>/dev/null | grep -E "^JobId=$jobid( |$)" | head -1)
 # Values may contain spaces (paths): a value runs up to the next " Key=".
 field() { grep -oP "(^| )$1=\K.*?(?= [A-Z][[:alnum:]_:/]*=|$)" <<< "$job_info" | head -1; }
 work_dir=$(field WorkDir)
@@ -171,7 +179,7 @@ fi
 
 # --- With --wait the job is over: report now, from here --- #
 if [[ $WAIT -eq 1 ]]; then
-    report "$jobid" "$FORMAT" "$OUTPUT"
+    report "$jobid" "$FORMAT" "$OUTPUT" "$cluster"
     exit $rc
 fi
 
@@ -187,6 +195,9 @@ report_args=(--parsable --dependency="afterany:$jobid" --job-name="job_usage-$jo
              --ntasks=1 --cpus-per-task=1 --mem=1G --time="$minutes"
              --output=/dev/null --export=NONE)
 [[ -n "$account" ]] && report_args+=(--account="${account%-gpu}")
+# A dependency can only name a job on the same cluster, so the report job
+# goes where the job went (this script must be reachable there too).
+[[ -n "$cluster" ]] && report_args+=(--clusters="$cluster")
 # shellcheck disable=SC2206
 report_args+=($JOB_USAGE_SBATCH_ARGS)
 
@@ -196,7 +207,7 @@ unset_args=()
 for v in $(compgen -e | grep '^SBATCH_'); do unset_args+=(-u "$v"); done
 
 rid=$(env "${unset_args[@]}" "$REAL_SBATCH" "${report_args[@]}" \
-      --wrap="$(printf '%q ' "$SELF" --report "$jobid" "$FORMAT" "$OUTPUT")")
+      --wrap="$(printf '%q ' "$SELF" --report "$jobid" "$FORMAT" "$OUTPUT" "$cluster")")
 if [[ "${rid%%;*}" =~ ^[0-9]+$ ]]; then
     echo "sbatch-usage: job ${rid%%;*} will write the $FORMAT report to $OUTPUT" >&2
 else

@@ -1,9 +1,16 @@
 # job_usage: per-job efficiency reports, and a SPANK plugin to automate them
 
 `job_usage.sh` is Pawsey's job report script, copied from
-`/software/pawsey/tools/pawseytools/bin/job_usage.sh`. One local change:
-JSON output writes values below 1 (which `bc` prints as `.5`) as `0.5`
-instead of `null`. Given a finished job
+`/software/pawsey/tools/pawseytools/bin/job_usage.sh`, with these local
+changes:
+
+- JSON output writes values below 1 (which `bc` prints as `.5`) as `0.5`
+  instead of `null`.
+- A job killed by a signal (ExitCode `0:9`) reports `128+signal` (137)
+  rather than 0, and non-signal values Slurm stores there (`0:125` for
+  OUT_OF_MEMORY) as is, so the failure advice is shown.
+- NODE_FAIL, PREEMPTED, DEADLINE and BOOT_FAIL count as finished.
+- `--cluster NAME` queries another cluster's accounting (`sacct -M`). Given a finished job
 ID, it reports CPU, memory and walltime efficiency and the service units the
 job was charged:
 
@@ -141,5 +148,8 @@ partition. Add options for it with `JOB_USAGE_SBATCH_ARGS`.
 As with `sbatch`, options go before the script name: anything after it (or
 after `--`) is passed to the script untouched. To find where the script
 starts, the wrapper reads which options take a value from `sbatch --help`.
+
+With `--clusters`, the wrapper sends its lookups and the report job to the
+cluster `sbatch` chose, so this script must be reachable from there.
 
 Difference from the plugin: `salloc` and `srun` are not covered.
