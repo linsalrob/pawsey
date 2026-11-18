@@ -6,7 +6,7 @@
 #
 # Usage: job_usage_epilog.sh --jobid ID [--format text|csv|json]
 #            [--output PATH] [--script job_usage.sh] [--wait SECONDS]
-#            [--any-host]
+#            [--any-host] [--no-csv-header]
 
 JOBID=""
 FORMAT="text"
@@ -14,6 +14,7 @@ OUTPUT=""
 SCRIPT="$(dirname "$(readlink -f "$0")")/job_usage.sh"
 WAIT=300
 ANY_HOST=0
+CSV_HEADER=1
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,12 +24,15 @@ while [[ $# -gt 0 ]]; do
         --script)   SCRIPT="$2"; shift ;;
         --wait)     WAIT="$2"; shift ;;
         --any-host) ANY_HOST=1 ;;
+        --no-csv-header) CSV_HEADER=0 ;;
         *) echo "job_usage_epilog: unknown argument '$1'" >&2; exit 1 ;;
     esac
     shift
 done
 
-[[ "$JOBID" =~ ^[0-9]+$ ]] || { echo "job_usage_epilog: bad --jobid" >&2; exit 1; }
+# Array elements are addressed as <array id>_<task id>: an element's raw
+# id can equal the array id, which sacct expands to the whole array.
+[[ "$JOBID" =~ ^[0-9]+(_[0-9]+)?$ ]] || { echo "job_usage_epilog: bad --jobid" >&2; exit 1; }
 [[ "$FORMAT" =~ ^(text|csv|json)$ ]] || { echo "job_usage_epilog: bad --format" >&2; exit 1; }
 [[ "$WAIT" =~ ^[0-9]+$ ]] || WAIT=300
 
@@ -40,6 +44,8 @@ batch_host=$(field BatchHost)
 node_list=$(field NodeList)
 std_out=$(field StdOut)
 work_dir=$(field WorkDir)
+[[ -z "$work_dir" || "$work_dir" == "(null)" ]] && \
+    work_dir=$(sacct -n -X -P -j "$JOBID" --format=WorkDir 2>/dev/null | head -1)
 
 # The epilog runs on every node of the job; report once, from the batch
 # host (or the first node, for salloc/srun allocations without one).
@@ -63,6 +69,10 @@ if [[ -z "$OUTPUT" ]]; then
         OUTPUT="$HOME/job_usage-%j.txt"
     fi
 fi
+# The plugin starts us in $HOME; relative paths mean the job's WorkDir.
+if [[ "$OUTPUT" != /* && -n "$work_dir" && "$work_dir" != "(null)" ]]; then
+    OUTPUT="$work_dir/$OUTPUT"
+fi
 OUTPUT=${OUTPUT//%j/$JOBID}
 OUTPUT=${OUTPUT//%u/$USER}
 
@@ -83,5 +93,6 @@ while :; do
 done
 
 args=("$JOBID" --format "$FORMAT")
+[[ "$CSV_HEADER" -eq 0 ]] && args+=(--no-csv-header)
 [[ "$FORMAT" == "text" ]] && echo >> "$OUTPUT"
 "$SCRIPT" "${args[@]}" >> "$OUTPUT" 2>&1

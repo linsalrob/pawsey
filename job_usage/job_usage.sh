@@ -254,6 +254,9 @@ json_num_or_null() {
     local v="$1"
     if [[ "$v" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; then
         printf '%s' "$v"
+    elif [[ "$v" =~ ^(-?)[.]([0-9]+)$ ]]; then
+        # bc prints values below 1 as ".5"; JSON needs "0.5".
+        printf '%s0.%s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
     else
         printf 'null'
     fi

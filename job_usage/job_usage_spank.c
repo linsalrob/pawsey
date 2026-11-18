@@ -209,6 +209,10 @@ int slurm_spank_job_epilog(spank_t sp, int ac, char **av)
 	gid_t gid;
 	pid_t pid;
 
+	/* job_script context never calls slurm_spank_init and shares no
+	 * state with it, so read the plugstack.conf arguments again here. */
+	parse_args(ac, av);
+
 	if (spank_option_getopt(sp, &opt_usage, &format) == ESPANK_SUCCESS)
 		requested = 1;
 	if (spank_option_getopt(sp, &opt_output, &output) == ESPANK_SUCCESS)
