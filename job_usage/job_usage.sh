@@ -304,7 +304,7 @@ for ts_var in submit_time start_time end_time; do
 done
 
 # Make sure job has actually run before we start making assumptions about it
-if [[ ! "$state" =~ ^(COMPLETED|FAILED|CANCELLED|OUT_OF_MEM|TIMEOUT) ]]; then
+if [[ ! "$state" =~ ^(COMPLETED|FAILED|CANCELLED|OUT_OF_MEM|TIMEOUT|NODE_FAIL|PREEMPTED|DEADLINE|BOOT_FAIL) ]]; then
   echo "Job is not yet in a finished state. It is $state."
   exit 1
 fi

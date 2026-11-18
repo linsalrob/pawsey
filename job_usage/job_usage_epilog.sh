@@ -82,7 +82,7 @@ deadline=$((SECONDS + WAIT))
 while :; do
     state=$(sacct -n -X -P -j "$JOBID" --format=State 2>/dev/null | head -1)
     case "$state" in
-        COMPLETED*|FAILED*|CANCELLED*|OUT_OF_ME*|TIMEOUT*) break ;;
+        COMPLETED*|FAILED*|CANCELLED*|OUT_OF_ME*|TIMEOUT*|NODE_FAIL*|PREEMPTED*|DEADLINE*|BOOT_FAIL*) break ;;
     esac
     if (( SECONDS >= deadline )); then
         printf '\njob_usage: no report, sacct still shows job %s as %s after %ss\n' \

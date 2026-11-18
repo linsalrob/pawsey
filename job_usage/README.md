@@ -138,6 +138,8 @@ partition. Add options for it with `JOB_USAGE_SBATCH_ARGS`.
   wrapper once `sbatch` returns.
 - `--parsable` output is unchanged; the wrapper's own messages go to stderr.
 
-Differences from the plugin: `salloc` and `srun` are not covered, and the
-`--job-usage` options are removed wherever they appear on the command line,
-including after the script name.
+As with `sbatch`, options go before the script name: anything after it (or
+after `--`) is passed to the script untouched. To find where the script
+starts, the wrapper reads which options take a value from `sbatch --help`.
+
+Difference from the plugin: `salloc` and `srun` are not covered.
