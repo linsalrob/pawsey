@@ -1,7 +1,9 @@
 # job_usage: per-job efficiency reports, and a SPANK plugin to automate them
 
 `job_usage.sh` is Pawsey's job report script, copied from
-`/software/pawsey/tools/pawseytools/bin/job_usage.sh`. Given a finished job
+`/software/pawsey/tools/pawseytools/bin/job_usage.sh`. One local change:
+JSON output writes values below 1 (which `bc` prints as `.5`) as `0.5`
+instead of `null`. Given a finished job
 ID, it reports CPU, memory and walltime efficiency and the service units the
 job was charged:
 
@@ -27,7 +29,8 @@ or in the script itself, `#SBATCH --job-usage`.
 |------|------|
 | `job_usage_spank.c` | SPANK plugin. Registers `--job-usage[=text\|csv\|json\|off]` and `--job-usage-output=PATH` for `sbatch`, `salloc` and `srun`, and validates them at submission. |
 | `job_usage_epilog.sh` | Helper the plugin starts from the job epilog. |
-| `job_usage.sh` | The report itself (unchanged copy). |
+| `job_usage.sh` | The report itself. |
+| `sbatch-usage` | User-level wrapper giving the same options without the plugin (see below). |
 | `plugstack.conf.d/job_usage.conf` | Example SPANK configuration line. |
 
 1. At submission, Slurm forwards the options to the job's epilog.
@@ -46,7 +49,8 @@ or in the script itself, `#SBATCH --job-usage`.
    `wait=` seconds.
 5. It runs `job_usage.sh` as the user and appends the report to the job's
    `StdOut` file. Without one, it writes `WorkDir/job_usage-<id>.txt`; with
-   `--job-usage-output`, it writes to that path (`%j` = job id, `%u` = user).
+   `--job-usage-output`, it writes to that path (`%j` = job id, `%u` = user;
+   a relative path is relative to the job's working directory).
 
 ## Building and installing (needs a Slurm administrator)
 
@@ -99,13 +103,41 @@ finished job:
 ./job_usage_epilog.sh --jobid <id> --any-host --output /tmp/report-%j.txt
 ```
 
-## Without the plugin
+## Without the plugin: `sbatch-usage`
 
-Until it is installed, the same result can be had with a dependent job that
-runs after the main one:
+`sbatch-usage` gives users the same options with no administrator
+involvement. It accepts every `sbatch` option, plus `--job-usage[=FORMAT]`
+and `--job-usage-output=PATH`:
 
 ```bash
-jid=$(sbatch --parsable job.slurm)
-sbatch --dependency=afterany:$jid --time=00:10:00 --mem=1G --cpus-per-task=1 \
-  --output=/dev/null --wrap="sleep 60; $PWD/job_usage.sh $jid >> slurm-$jid.out"
+alias sbatch=/path/to/job_usage/sbatch-usage     # optional, e.g. in ~/.bashrc
+sbatch --job-usage job.slurm
+sbatch --job-usage=csv --array=1-100 job.slurm
 ```
+
+`sbatch` rejects unknown `#SBATCH` lines, so inside a script use
+`#JOB_USAGE` instead:
+
+```bash
+#SBATCH --time=2:00:00
+#JOB_USAGE --job-usage=json --job-usage-output=usage/%j.json
+```
+
+The wrapper submits the job, then a follow-on job
+(`--dependency=afterany:<id>`, 1 core, 1 GB, about 10 minutes) that runs
+`job_usage_epilog.sh`. That costs about 0.01 SU per job. Its account is the
+job's own account with any `-gpu` suffix removed, and it runs in the default
+partition. Add options for it with `JOB_USAGE_SBATCH_ARGS`.
+
+- A single job's report is appended to its stdout file.
+- For an array, every element is reported in one file,
+  `<WorkDir>/job_usage-<array id>.<txt|csv|json>` (the stdout path of a
+  pending array is not known element by element). There is one follow-on
+  job per array, not one per element.
+- With `--wait`, no extra job is submitted: the report is written from the
+  wrapper once `sbatch` returns.
+- `--parsable` output is unchanged; the wrapper's own messages go to stderr.
+
+Differences from the plugin: `salloc` and `srun` are not covered, and the
+`--job-usage` options are removed wherever they appear on the command line,
+including after the script name.
