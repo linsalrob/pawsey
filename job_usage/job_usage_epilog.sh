@@ -38,8 +38,30 @@ done
 
 # Read the job record now: the controller forgets it MinJobAge seconds
 # after it ends, well before sacct may have the final state.
-job_info=$(scontrol show job -o "$JOBID" 2>/dev/null)
-field() { grep -oP "(^| )$1=\K\S*" <<< "$job_info" | head -1; }
+# scontrol prints one line per array element, so pick this job's own line.
+# An element's raw id can equal its array's id, which sacct (and
+# job_usage.sh) would expand to the whole array, so switch to the
+# <array id>_<task id> form whenever the job is an array element.
+if [[ "$JOBID" == *_* ]]; then
+    job_info=$(scontrol show job -o "$JOBID" 2>/dev/null |
+               grep -E "(^| )ArrayJobId=${JOBID%_*} ArrayTaskId=${JOBID#*_}( |$)" | head -1)
+else
+    job_info=$(scontrol show job -o "$JOBID" 2>/dev/null | grep -E "^JobId=$JOBID( |$)" | head -1)
+fi
+# Values may contain spaces (paths): a value runs up to the next " Key=".
+field() { grep -oP "(^| )$1=\K.*?(?= [A-Z][[:alnum:]_:/]*=|$)" <<< "$job_info" | head -1; }
+array_job=$(field ArrayJobId)
+array_task=$(field ArrayTaskId)
+if [[ "$JOBID" != *_* ]]; then
+    if [[ "$array_job" =~ ^[0-9]+$ && "$array_task" =~ ^[0-9]+$ ]]; then
+        JOBID="${array_job}_${array_task}"
+    elif [[ -z "$job_info" ]]; then
+        # The controller has forgotten the job; ask sacct instead.
+        mapped=$(sacct -n -X -P -j "$JOBID" --format=JobIDRaw,JobID 2>/dev/null |
+                 awk -F'|' -v r="$JOBID" '$1 == r { print $2; exit }')
+        [[ "$mapped" =~ ^[0-9]+(_[0-9]+)?$ ]] && JOBID=$mapped
+    fi
+fi
 batch_host=$(field BatchHost)
 node_list=$(field NodeList)
 std_out=$(field StdOut)

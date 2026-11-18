@@ -146,8 +146,9 @@ fi
 [[ -z "$FORMAT" || "$FORMAT" == "off" ]] && exit $rc
 
 # --- Work out where the report goes --- #
-job_info=$(scontrol show job -o "$jobid" 2>/dev/null)
-field() { grep -oP "(^| )$1=\K\S*" <<< "$job_info" | head -1; }
+job_info=$(scontrol show job -o "$jobid" 2>/dev/null | grep -E "^JobId=$jobid( |$)" | head -1)
+# Values may contain spaces (paths): a value runs up to the next " Key=".
+field() { grep -oP "(^| )$1=\K.*?(?= [A-Z][[:alnum:]_:/]*=|$)" <<< "$job_info" | head -1; }
 work_dir=$(field WorkDir)
 std_out=$(field StdOut)
 account=$(field Account)
