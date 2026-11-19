@@ -1444,7 +1444,7 @@ For substantial or multi-turn implementation tasks, use `.agent/CONTINUITY.md` a
 - Do not commit it unless the repository already tracks it or the user requests it.
 - Update it only when there is a meaningful change in goal, plan, decision, progress, discovery, or outcome.
 - Create the parent `.agent/` directory when needed. Do not modify `.gitignore` solely for this file unless requested; use local exclusion where appropriate. A repository-specific `AGENTS.md` may define another continuity location.
-
+- If you don't find a current .agent/CONTINUITY.md check ~/.claude/CURRENT_WORK.md or ~/.agent/CURRENT_WORK.md for a limited instruction that explains where to find it.
 
 ### Recommended format
 
