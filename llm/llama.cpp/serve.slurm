@@ -67,7 +67,7 @@ if [[ ${LLM_BENCH:-0} == 1 ]]; then
     PY=$(command -v python3.11 || command -v python3)
     "$PY" "$HERE/bench/bench.py" --api llamacpp --url "http://127.0.0.1:$port" \
         --api-key-file "$keyfile" --model "$MODEL_FILE" --ctx "$LLM_CTX" \
-        --prompts "$HERE/bench/prompts.jsonl" --out "$out/bench.jsonl"
+        --prompts "$HERE/bench/prompts.jsonl" --out "$out/bench.jsonl" ${LLM_BENCH_ARGS:-}
     sleep 4
     llm_monitor_summary "$out/memory.tsv"
     echo "Results in $out"

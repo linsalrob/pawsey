@@ -91,7 +91,7 @@ if [[ ${LLM_BENCH:-0} == 1 ]]; then
     PY=$(command -v python3.11 || command -v python3)
     "$PY" "$HERE/bench/bench.py" --api ollama --url "http://$OLLAMA_HOST" \
         --model "$OLLAMA_NAME" --ctx "$LLM_CTX" \
-        --prompts "$HERE/bench/prompts.jsonl" --out "$out/bench.jsonl"
+        --prompts "$HERE/bench/prompts.jsonl" --out "$out/bench.jsonl" ${LLM_BENCH_ARGS:-}
     "$ollama" ps | tee "$out/ollama-ps.txt"
     grep -E 'offloaded|model buffer size|KV|flash|n_ctx' "$out/server.log" | head -20 || true
     sleep 4

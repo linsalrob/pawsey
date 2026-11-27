@@ -24,6 +24,15 @@ It runs on a GPU node, not the cheaper `work` partition, because the `rocm/7.x`
 modules cannot be loaded on CPU nodes. The installed binaries link to
 `/opt/rocm-7.0.1`, so [`serve.slurm`](serve.slurm) loads the same module at run time.
 
+Overrides (environment variables, with `--export=ALL`):
+- `LLAMA_REF`: a release tag or a full commit SHA. Prefer tags: for an untagged
+  commit the build cannot find a matching prebuilt web UI and falls back to the
+  latest one, so the build is not fully pinned.
+- `LLAMA_GPU_TARGETS`: default `gfx90a`. `gfx90a:xnack-` was tested and made no
+  measurable difference.
+- `LLAMA_CMAKE_ARGS`: extra CMake options, recorded in `BUILD_INFO`.
+- `LLAMA_PREFIX`: the install location, so variants can sit side by side.
+
 The build fetches llama.cpp's prebuilt web UI for this tag during configuration
 (`LLAMA_USE_PREBUILT_UI`, on by default). Pass `-DLLAMA_USE_PREBUILT_UI=OFF` if
 the build node has no internet access.

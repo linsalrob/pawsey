@@ -104,10 +104,21 @@ ssh -N -L 33342:127.0.0.1:33342 -J USER@setonix.pawsey.org.au USER@nid002160
 ```
 
 Then open `http://127.0.0.1:33342` locally. For llama.cpp this serves a chat
-page plus an OpenAI-compatible API under `/v1`. For Ollama it is the Ollama API.
-SSH from a login node to a compute node running your job was tested and works.
-The full laptop-to-node jump has not been tested yet. Cancel the job
-(`scancel <jobid>`) when you are finished: the GPU is billed until the job ends.
+page plus an OpenAI-compatible API under `/v1`. Ollama serves its own API under
+`/api` and an OpenAI-compatible one under `/v1`. Both `/v1/chat/completions`
+endpoints were tested through a forwarded port.
+
+Tested: `ssh -L` forwarding to a running job's node, both directly from a login
+node and with the `-J USER@setonix.pawsey.org.au` jump shown above. Not tested:
+the laptop end of that command. Pawsey's `pam_slurm_adopt` allows SSH to a
+compute node **only while you have a job running on it**, so the tunnel closes
+when the job ends.
+
+The llama.cpp chat page is served gzip-compressed. Browsers handle that, but
+plain `curl` without `Accept-Encoding: gzip` gets HTTP 415, which does not mean
+the server is broken. Cancel the job (`scancel <jobid>`) when you are finished:
+the GPU is billed until the job ends. `scancel` triggers the launcher's clean
+shutdown (tested: nothing is left on the GPU).
 
 ## Tested versions
 
@@ -153,11 +164,48 @@ Behaviour checks, all passed on both runtimes:
   the runtimes, and the rest diverge only after 58–828 characters: same weights and
   template, with ordinary floating-point drift between builds.
 
-Answer quality was spot-checked by hand against the reference notes in
-[`bench/prompts.jsonl`](bench/prompts.jsonl). One known-answer test fails on both
-runtimes identically: given 150 rows, the model names the sample with the
-*second*-largest read count. Treat that as a property of the model at this
-setting, not of either runtime, and a reminder to check model answers.
+### Answer quality
+
+Each reply was graded against the reference notes in
+[`bench/prompts.jsonl`](bench/prompts.jsonl) by a reviewer other than the model
+under test. The questions are simple, so this is a smoke test, not an
+evaluation of fitness for research use.
+
+| Prompt | Grade (both runtimes unless noted) |
+|---|---|
+| gen-3, code-1, code-2, micro-2, micro-3, think-1 | correct and adequate |
+| gen-1 (blue sky) | correct but vague: no Rayleigh scattering, no wavelength dependence |
+| gen-2 (boiling point) | correct value; mechanism loosely stated (no vapour pressure) |
+| micro-1 (Cas9) | correct; omits the PAM and the double-strand break |
+| micro-4 (Gram stain) | correct. The Ollama reply added an **unsupported figure**: peptidoglycan "about 1–2% of the cell wall by weight" (textbooks give roughly 10% for Gram-negative bacteria) |
+| long-1 (largest of 150 values) | **wrong** with thinking off; right with thinking on (~2,900 reasoning tokens, ~80 s) |
+
+No reply expressed any uncertainty, including the wrong ones. Check facts,
+figures and anything numeric against a source.
+
+### Long context (32k)
+
+With `LLM_CTX=32768` (Qwen3's native maximum), one GCD holds the model plus an
+8 GB KV cache, peaking at 27.8 GB VRAM. On ~31k-token prompts prefill slows to
+~500 tok/s, so a full-context prompt takes about a minute before the first
+token, and generation drops to ~34 tok/s. Both runtimes behaved the same.
+
+The generated known-answer prompts (`--lookup-rows`, `--long-rows`) give a
+warning for retrieval-style use. Asked to copy one value from a table, the model
+was right at ~3.4k and ~31k tokens but at ~15k tokens returned the value from
+the **next row**, identically in both runtimes. It also never compared 150
+values correctly without thinking. Use tools for exact lookups and arithmetic
+over tables, and use the model to explain their results.
+
+```bash
+LLM_CTX=32768 LLM_BENCH=1 LLM_BENCH_ARGS="--long-only --long-rows 150 --lookup-rows 150 650 1300 --think-long" \
+  sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL -p gpu llm/llama.cpp/serve.slurm
+```
+
+Ollama reuses the cached prompt prefix between requests and has no setting to
+turn that off. A prompt that shares a prefix with the previous one, such as the
+same table with a different question, therefore shows an unrealistically high
+prompt speed. `bench.py` turns caching off for llama.cpp.
 
 **Host memory.** `ps` reports ~15–19 GB resident for the server because the
 memory-mapped GGUF counts as resident. Those pages are shared file cache, not
@@ -186,15 +234,24 @@ file (12 GB MaxRSS in that step) but also fits.
    the launcher bakes `num_thread` into the served model; API clients can still
    override it per request.
 4. **Both runtimes are llama.cpp underneath.** Ollama v0.40.18 runs its own
-   bundled `llama-server`, so speeds are close. Its slightly faster generation
-   probably comes from its newer ROCm 7.2 libraries (the `rocm/7.0.1` module is
-   the newest on Setonix), but that is a guess and has not been tested.
+   bundled `llama-server`, so speeds are close. Its ~6% faster generation (40
+   vs 37.7 tok/s) is **not** explained by any of these, each tested with
+   `llama-bench` on the same node:
+   - its ROCm 7.2.1 runtime libraries: our binary gives the same speed when run against them;
+   - its llama.cpp commit (`f5e6915c2`): built with our recipe, it gives 37.6 tok/s;
+   - building without OpenMP (`-DGGML_OPENMP=OFF`), as Ollama does;
+   - compiling for `gfx90a:xnack-` rather than generic `gfx90a`.
+
+   The remaining difference is Ollama's ROCm 7.2.1 compiler, which needs a
+   ROCm 7.2 build container to test. That has not been done.
 
 ## Benchmark and validation tools
 
-- [`bench/bench.py`](bench/bench.py) sends the prompts in `bench/prompts.jsonl`, plus a
-  generated long-context question with a known answer, to either server at
-  matched settings. It writes one JSON record per prompt. Standard library only.
+- [`bench/bench.py`](bench/bench.py) sends the prompts in `bench/prompts.jsonl`, plus
+  generated long-context questions with known answers (`--long-rows`,
+  `--lookup-rows`, `--think-long`), to either server at matched settings. It
+  writes one JSON record per prompt and marks long-context answers right or
+  wrong. Standard library only. Pass extra options through `LLM_BENCH_ARGS`.
 - [`bench/summarise.py`](bench/summarise.py) compares two runs (speeds, long-context
   answer, reasoning separation, stop-token leaks, identical replies).
 - [`lib.sh`](lib.sh) holds the helpers the launchers share: port choice,

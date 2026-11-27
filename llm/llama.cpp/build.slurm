@@ -25,7 +25,10 @@ module -t list 2>&1
 
 src=$LLM_ROOT/src/llama.cpp-$LLAMA_REF
 if [[ ! -d $src/.git ]]; then
-    git clone --depth 1 --branch "$LLAMA_REF" https://github.com/ggml-org/llama.cpp.git "$src"
+    # Fetch just the one ref; works for a release tag or a full commit SHA.
+    git init -q "$src"
+    git -C "$src" fetch -q --depth 1 https://github.com/ggml-org/llama.cpp.git "$LLAMA_REF"
+    git -C "$src" checkout -q --detach FETCH_HEAD
 fi
 commit=$(git -C "$src" rev-parse HEAD)
 echo "llama.cpp $LLAMA_REF = $commit"
@@ -39,14 +42,15 @@ cmake -S "$src" -B "$build" \
     -DGGML_HIP=ON -DGPU_TARGETS="$LLAMA_GPU_TARGETS" \
     -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
     -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
+    ${LLAMA_CMAKE_ARGS:-} \
     -DCMAKE_INSTALL_PREFIX="$LLAMA_PREFIX.incomplete"
 SECONDS=0
 cmake --build "$build" --parallel "$(nproc)"
 echo "Build took ${SECONDS}s"
 rm -rf "$LLAMA_PREFIX.incomplete"
 cmake --install "$build"
-printf 'ref=%s\ncommit=%s\nrocm=%s\ntargets=%s\nbuilt=%s\n' \
-    "$LLAMA_REF" "$commit" "$LLAMA_ROCM_MODULE" "$LLAMA_GPU_TARGETS" "$(date -Is)" \
+printf 'ref=%s\ncommit=%s\nrocm=%s\ntargets=%s\ncmake_extra=%s\nbuilt=%s\n' \
+    "$LLAMA_REF" "$commit" "$LLAMA_ROCM_MODULE" "$LLAMA_GPU_TARGETS" "${LLAMA_CMAKE_ARGS:-}" "$(date -Is)" \
     > "$LLAMA_PREFIX.incomplete/BUILD_INFO"
 mv "$LLAMA_PREFIX.incomplete" "$LLAMA_PREFIX"
 rm -rf "$build"   # ~thousands of object files; the source tree is kept for reference
