@@ -1,36 +1,63 @@
 # llama.cpp on Setonix
 
-Status: unvalidated installation recipe. Read [shared setup](../README.md) first.
+Read the [shared guide](../README.md) first: it covers the model, storage,
+matched settings, security and results. This page covers what is specific to llama.cpp.
 
-## Build in user space
+Validated: llama.cpp **b12807** (`e0b9fd7`) built with `rocm/7.0.1` on one MI250X
+GCD, 2026-11-27.
 
-Load a compatible site ROCm and CMake module. Choose a release tag or commit explicitly (LLAMA_REF), a new source directory (LLAMA_SRC), and build inside an appropriate allocation. Confirm hipconfig and cmake are available.
+## Build
 
 ```bash
-: "${LLAMA_REF:?Set a release tag or commit}"
-: "${LLAMA_SRC:?Set a new source directory outside this repository}"
-git clone https://github.com/ggml-org/llama.cpp.git "$LLAMA_SRC"
-git -C "$LLAMA_SRC" checkout --detach "$LLAMA_REF"
-HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" \
-  cmake -S "$LLAMA_SRC" -B "$LLAMA_SRC/build" \
-  -DGGML_HIP=ON -DGPU_TARGETS=gfx90a -DCMAKE_BUILD_TYPE=Release
-cmake --build "$LLAMA_SRC/build" --parallel 8
-git -C "$LLAMA_SRC" rev-parse HEAD
-"$LLAMA_SRC/build/bin/llama-server" --version
+sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL llm/llama.cpp/build.slurm
 ```
 
-gfx90a is the MI250X target. Compiler/module compatibility still needs validation on the installed Setonix stack. Keep the same runtime library environment when serving. Check the chosen revision's build documentation if flags change.
+[`build.slurm`](build.slurm) shallow-clones the pinned tag into
+`$LLM_ROOT/src/llama.cpp-b12807`. It configures with HIP for `gfx90a` using the
+site `rocm/7.0.1` and `cmake/3.31.9` modules (with the default `gcc-native/14.2`),
+builds with static libraries and no tests or examples, and installs into
+`$LLM_ROOT/llama.cpp-b12807`. It records the ref, commit, ROCm module and build
+date in `BUILD_INFO`, then removes the build tree (2.2 GB). Compiling took
+5.3 minutes on one GCD's 8 cores.
+
+It runs on a GPU node, not the cheaper `work` partition, because the `rocm/7.x`
+modules cannot be loaded on CPU nodes. The installed binaries link to
+`/opt/rocm-7.0.1`, so [`serve.slurm`](serve.slurm) loads the same module at run time.
+
+The build fetches llama.cpp's prebuilt web UI for this tag during configuration
+(`LLAMA_USE_PREBUILT_UI`, on by default). Pass `-DLLAMA_USE_PREBUILT_UI=OFF` if
+the build node has no internet access.
 
 ## Serve
 
-From the pawsey checkout, after loading the required modules:
-
 ```bash
-export LLAMA_SERVER="$LLAMA_SRC/build/bin/llama-server"
-export MODEL_GGUF=/absolute/path/to/model.gguf
-sbatch --account="${PAWSEY_PROJECT}-gpu" llm/llama.cpp/serve.slurm
+# validation: llama-bench, then the matched prompt benchmark, then stop
+LLM_BENCH=1 sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL llm/llama.cpp/serve.slurm
+# interactive use
+sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL --time=02:00:00 llm/llama.cpp/serve.slurm
 ```
 
-The launcher enables GPU offload, a 4096-token context and one slot. For sharded models point MODEL_GGUF at the first shard and keep all shards together.
+`llama-server` runs under `srun` on one GCD with:
+`--n-gpu-layers 999 --ctx-size 4096 --parallel 1 --flash-attn on --batch-size 512
+--ubatch-size 512 --threads <cores> --jinja --host 127.0.0.1 --port <per-job>
+--api-key-file $LLM_ROOT/llama-server.key`.
 
-After establishing the tunnel described in the shared README, open http://localhost:8080 for the built-in chat UI, or inspect http://localhost:8080/v1/models. Check logs for actual GPU offload. Tool calling and template validation are subsequent milestones, not implied by basic chat success.
+The launcher creates the API key file on first use (mode 600) and enforces it:
+requests without `Authorization: Bearer <key>` get HTTP 401. `/health` stays open.
+Loading took 12 s from process start to ready.
+
+## Use
+
+Through the tunnel printed in the job log:
+
+```bash
+KEY=$(cat $LLM_ROOT/llama-server.key)   # copy the key to your computer securely if needed
+curl http://127.0.0.1:<port>/v1/chat/completions -H "Authorization: Bearer $KEY" \
+  -H 'Content-Type: application/json' -d '{
+  "messages": [{"role": "user", "content": "What is a prophage?"}],
+  "chat_template_kwargs": {"enable_thinking": false}}'
+```
+
+With thinking on (the default for Qwen3), the reasoning comes back separately in
+`message.reasoning_content`. `http://127.0.0.1:<port>/` serves the built-in chat
+page, which asks for the API key.
