@@ -5,6 +5,8 @@
 #       serves until the walltime or `scancel`; the log prints the tunnel command.
 #   LLM_BENCH=1 sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL llm/llama.cpp/serve.slurm
 #       runs llama-bench and the matched prompt benchmark, then stops (validation).
+#   LLM_AFTER_READY=script.sh ...   runs script.sh once the server is ready, then
+#       stops; the script gets LLM_CHAT_URL, LLM_CHAT_MODEL, LLM_CHAT_KEY_FILE.
 #
 # The server listens on compute-node loopback only and requires an API key,
 # because other users' jobs can share the node. The key is written to
@@ -63,7 +65,11 @@ grep -E 'offloaded|ROCm|HIP|gfx|model buffer size|KV|flash|n_ctx' "$out/server.l
 llm_tunnel_hint "$port"
 echo "API key file: $keyfile"
 
-if [[ ${LLM_BENCH:-0} == 1 ]]; then
+if [[ -n ${LLM_AFTER_READY:-} ]]; then
+    # Run another workload (e.g. llm/rag/after_ready.sh) against this server.
+    LLM_CHAT_URL=http://127.0.0.1:$port/v1 LLM_CHAT_MODEL=$MODEL_FILE LLM_CHAT_KEY_FILE=$keyfile \
+        LLM_RUNTIME=llamacpp LLM_RUN_DIR=$out LLM_THREADS=$threads bash "$LLM_AFTER_READY"
+elif [[ ${LLM_BENCH:-0} == 1 ]]; then
     PY=$(command -v python3.11 || command -v python3)
     "$PY" "$HERE/bench/bench.py" --api llamacpp --url "http://127.0.0.1:$port" \
         --api-key-file "$keyfile" --model "$MODEL_FILE" --ctx "$LLM_CTX" \
