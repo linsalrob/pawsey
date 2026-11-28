@@ -223,7 +223,8 @@ file (12 GB MaxRSS in that step) but also fits.
    2.4 GB of ROCm libraries cold from `/scratch` took longer than that. The
    launcher now reads those libraries into the page cache first (3–7 s), lets
    Ollama probe only its ROCm backend, and stops the job if Ollama reports no
-   ROCm GPU.
+   ROCm GPU. Reported upstream as
+   [ollama#19971](https://github.com/ollama/ollama/issues/19971).
 3. **Set the CPU thread count to the allocation.** Both runtimes default to the
    node's 64 physical cores, not the 8 a GCD allocation gets. Inside an `srun`
    step this oversubscription cut Ollama's generation speed from 40 to 23 tok/s.
@@ -232,7 +233,8 @@ file (12 GB MaxRSS in that step) but also fits.
    the batch step and 16 in the `srun` step. The launchers use `nproc` divided
    by threads per core instead. Ollama has no server-wide thread setting, so
    the launcher bakes `num_thread` into the served model; API clients can still
-   override it per request.
+   override it per request. Upstream:
+   [ollama#17916](https://github.com/ollama/ollama/issues/17916).
 4. **Both runtimes are llama.cpp underneath.** Ollama v0.40.18 runs its own
    bundled `llama-server`, so speeds are close. Its ~6% faster generation (40
    vs 37.7 tok/s) is **not** explained by any of these, each tested with

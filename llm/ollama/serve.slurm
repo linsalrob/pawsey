@@ -48,6 +48,7 @@ OLLAMA_NAME=${OLLAMA_NAME:-qwen3-32b-q4km}
 # Ollama gives GPU discovery a fixed 30 s (discover/runner.go). Loading its
 # ~2.4 GB of ROCm libraries cold from /scratch can take longer, and Ollama then
 # silently falls back to the CPU. Read them once into the page cache first.
+# Upstream: https://github.com/ollama/ollama/issues/19971
 echo "Warming page cache for $OLLAMA_LLM_LIBRARY libraries"; tw=$SECONDS
 find "$OLLAMA_PREFIX/lib/ollama" -maxdepth 1 -type f -name '*.so*' -print0 | xargs -0 cat > /dev/null
 find "$OLLAMA_PREFIX/lib/ollama/$OLLAMA_LLM_LIBRARY" -type f \( -name '*.so*' -o -name '*gfx90a*' \) \
@@ -77,6 +78,7 @@ fi
 # The served model adds this allocation's settings on top of the base. This is
 # instant (no blob copy). Ollama has no server-wide thread setting, and without
 # num_thread its runner uses all 64 node cores (see llm_threads in lib.sh).
+# Upstream: https://github.com/ollama/ollama/issues/17916
 threads=$(llm_threads)
 printf 'FROM %s\nPARAMETER num_ctx %s\nPARAMETER num_thread %s\n' \
     "$OLLAMA_NAME-base" "$LLM_CTX" "$threads" > "$out/Modelfile"
