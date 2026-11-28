@@ -2,6 +2,7 @@
 # Download the pinned GGUF on the data-transfer (copy) partition and verify it
 # against the publisher's SHA256. Usage, from the root of this repository:
 #   sbatch --account="$PAWSEY_PROJECT" llm/fetch_model.slurm
+#   LLM_FETCH=embed sbatch --account="$PAWSEY_PROJECT" --export=ALL llm/fetch_model.slurm
 #SBATCH --job-name=llm-fetch-model
 #SBATCH --partition=copy
 #SBATCH --ntasks=1
@@ -13,6 +14,11 @@ set -euo pipefail
 HERE=${LLM_DIR:-${SLURM_SUBMIT_DIR:-.}/llm}
 # shellcheck source=versions.env
 source "$HERE/versions.env"
+# LLM_FETCH=embed fetches the retrieval embedding model instead of the chat model.
+if [[ ${LLM_FETCH:-chat} == embed ]]; then
+    MODEL_REPO=$EMBED_REPO MODEL_REVISION=$EMBED_REVISION MODEL_FILE=$EMBED_FILE
+    MODEL_SHA256=$EMBED_SHA256 MODEL_LICENSE=$EMBED_LICENSE MODEL_GGUF=$EMBED_GGUF
+fi
 
 dest=$MODEL_GGUF
 mkdir -p "$(dirname "$dest")"

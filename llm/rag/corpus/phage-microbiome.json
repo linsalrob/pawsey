@@ -1,0 +1,11 @@
+{
+  "description": "Example corpus: highly cited, openly licensed (CC BY / CC0) articles on bacteriophages and the human microbiome, 2018-2025.",
+  "sort": "CITED desc",
+  "filter": "AND PUB_YEAR:[2018 TO 2025] AND LANG:eng",
+  "queries": [
+    {"name": "phage", "n": 150,
+     "query": "TITLE_ABS:\"bacteriophage\" OR TITLE_ABS:\"bacteriophages\" OR TITLE_ABS:\"phage therapy\" OR TITLE_ABS:\"prophage\" OR TITLE_ABS:\"virome\""},
+    {"name": "microbiome", "n": 150,
+     "query": "TITLE_ABS:\"gut microbiome\" OR TITLE_ABS:\"gut microbiota\" OR TITLE_ABS:\"human microbiome\" OR TITLE_ABS:\"metagenomics\""}
+  ]
+}

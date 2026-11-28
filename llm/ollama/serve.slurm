@@ -5,6 +5,8 @@
 #       serves until the walltime or `scancel`; the log prints the tunnel command.
 #   LLM_BENCH=1 sbatch --account="${PAWSEY_PROJECT}-gpu" --export=ALL llm/ollama/serve.slurm
 #       imports the GGUF if needed, runs the matched prompt benchmark, then stops.
+#   LLM_AFTER_READY=script.sh ...   runs script.sh once the model is ready, then
+#       stops; the script gets LLM_CHAT_URL and LLM_CHAT_MODEL.
 #
 # Ollama has no authentication. It listens on compute-node loopback only, but
 # other users' jobs on a shared GPU node can reach that port. Do not send
@@ -97,7 +99,12 @@ echo "Imported blob checksum: $blob"
     echo "ERROR: served weights are not the pinned GGUF ($MODEL_SHA256)" >&2; exit 1; }
 llm_tunnel_hint "$port"
 
-if [[ ${LLM_BENCH:-0} == 1 ]]; then
+if [[ -n ${LLM_AFTER_READY:-} ]]; then
+    # Run another workload (e.g. llm/rag/after_ready.sh) against this server.
+    # Ollama has no API key; LLM_CHAT_KEY_FILE stays empty.
+    LLM_CHAT_URL=http://$OLLAMA_HOST/v1 LLM_CHAT_MODEL=$OLLAMA_NAME LLM_CHAT_KEY_FILE= \
+        LLM_RUNTIME=ollama LLM_RUN_DIR=$out LLM_THREADS=$threads bash "$LLM_AFTER_READY"
+elif [[ ${LLM_BENCH:-0} == 1 ]]; then
     PY=$(command -v python3.11 || command -v python3)
     "$PY" "$HERE/bench/bench.py" --api ollama --url "http://$OLLAMA_HOST" \
         --model "$OLLAMA_NAME" --ctx "$LLM_CTX" \
