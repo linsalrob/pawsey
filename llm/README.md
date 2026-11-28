@@ -92,8 +92,9 @@ that node can connect to a port on its loopback interface**. So:
 - **Ollama has no authentication.** Any user on the node could use your server
   while it runs. Do not send confidential or unpublished material to it unless
   you hold the whole node (`sbatch --exclusive`, which is billed for all 8 GCDs).
-- Both servers bind to `127.0.0.1` only and use a port derived from the job ID
-  (20000–39999), so two users' jobs on one node do not collide.
+- Both servers bind to `127.0.0.1` only, on a port in 20000–39999 that nothing
+  on the node is listening on. The job ID seeds the search, so jobs normally
+  keep their own port, but one already taken is skipped rather than failing.
 
 ## Connecting from your computer
 

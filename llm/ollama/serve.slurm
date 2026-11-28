@@ -69,10 +69,14 @@ fi
 
 # Import the same GGUF once, as a base model. Ollama copies it into
 # OLLAMA_MODELS as a blob (a second ~20 GB on disk); later jobs reuse it.
-if ! "$ollama" show "$OLLAMA_NAME-base" >/dev/null 2>&1; then
+# The base name carries the weights' checksum, so changing the pin in
+# versions.env imports the new GGUF instead of silently reusing the old one.
+# Old bases are left in place: remove them with `ollama rm` to reclaim disk.
+base=$OLLAMA_NAME-base-${MODEL_SHA256:0:12}
+if ! "$ollama" show "$base" >/dev/null 2>&1; then
     printf 'FROM %s\n' "$MODEL_GGUF" > "$out/Modelfile.base"
     ti=$SECONDS
-    "$ollama" create "$OLLAMA_NAME-base" -f "$out/Modelfile.base" 2>&1 | tail -1
+    "$ollama" create "$base" -f "$out/Modelfile.base" 2>&1 | tail -1
     echo "import_s=$(( SECONDS - ti ))"
 fi
 # The served model adds this allocation's settings on top of the base. This is
@@ -81,12 +85,16 @@ fi
 # Upstream: https://github.com/ollama/ollama/issues/17916
 threads=$(llm_threads)
 printf 'FROM %s\nPARAMETER num_ctx %s\nPARAMETER num_thread %s\n' \
-    "$OLLAMA_NAME-base" "$LLM_CTX" "$threads" > "$out/Modelfile"
+    "$base" "$LLM_CTX" "$threads" > "$out/Modelfile"
 "$ollama" create "$OLLAMA_NAME" -f "$out/Modelfile" 2>&1 | tail -1
 "$ollama" show "$OLLAMA_NAME"
 "$ollama" show --modelfile "$OLLAMA_NAME" > "$out/modelfile.txt"
-echo "Imported blob checksum (should equal MODEL_SHA256):"
-grep -m1 -oE 'sha256-[0-9a-f]{64}' "$out/modelfile.txt" || true
+# Ollama names the imported blob by its SHA256, so this proves the served
+# weights are byte-identical to the GGUF llama.cpp serves.
+blob=$(grep -m1 -oE 'sha256-[0-9a-f]{64}' "$out/modelfile.txt" | cut -d- -f2)
+echo "Imported blob checksum: $blob"
+[[ $blob == "$MODEL_SHA256" ]] || {
+    echo "ERROR: served weights are not the pinned GGUF ($MODEL_SHA256)" >&2; exit 1; }
 llm_tunnel_hint "$port"
 
 if [[ ${LLM_BENCH:-0} == 1 ]]; then

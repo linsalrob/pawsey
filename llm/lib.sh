@@ -1,9 +1,20 @@
 # Shared helpers for the Setonix LLM launchers. Sourced, not executed.
 # shellcheck shell=bash
 
-# Pick a loopback port unique to this job: shared GPU nodes run several users'
-# jobs at once, so a fixed port (8080, 11434) can collide with someone else's.
-llm_port() { echo "${LLM_PORT:-$(( 20000 + SLURM_JOB_ID % 20000 ))}"; }
+# Pick a free loopback port: shared GPU nodes run several users' jobs at once,
+# so a fixed port (8080, 11434) can collide with someone else's. The job ID
+# only seeds the search, because consecutive job IDs give adjacent seeds and a
+# job needing two ports would otherwise take the next job's. Scanning for a
+# port nothing is listening on also covers the ports other users hold.
+llm_port() {  # [seed]
+    local p=${1:-${LLM_PORT:-$(( 20000 + SLURM_JOB_ID % 20000 ))}} i
+    for i in $(seq 200); do
+        ss -ltnH "sport = :$p" 2>/dev/null | grep -q . || { echo "$p"; return 0; }
+        p=$(( p + 1 > 39999 ? 20000 : p + 1 ))
+    done
+    echo "No free port near ${1:-seed}" >&2
+    return 1
+}
 
 # CPU threads for the runtime: the physical cores in this allocation. On a
 # Setonix GPU node one GCD pack is 8 cores = 16 hardware threads; the batch
@@ -38,17 +49,43 @@ llm_provenance() {
     echo "model=$MODEL_GGUF sha256=$MODEL_SHA256 ($MODEL_REPO@$MODEL_REVISION)"
 }
 
-# Sample GPU VRAM in use and the host RSS of a named process every few seconds
-# into a TSV, in the background. Prints the sampler PID.
+# Total VRAM in use on the GPUs this job can see. Slurm's cgroup exposes only
+# the allocation's GCDs to rocm-smi, so this is already scoped to the job; with
+# several GPUs allocated it is their sum, which is what the launchers want.
+llm_vram_used_mib() {
+    rocm-smi --showmeminfo vram 2>/dev/null \
+        | awk -F': ' '/Total Used Memory/ {s += $NF} END {printf "%d", s / 1048576}'
+}
+
+# Processes of this job only, matching a name regex. `ps -u $USER` spans the
+# whole node, and GPU nodes are shared, so another of your own jobs on the same
+# node would otherwise be counted too. Slurm puts every process of a job in a
+# cgroup named job_<id>, including srun steps, which are not descendants of
+# this script. Prints "pid rss_kib" per line. The regex matches the process
+# name, or the whole command line with -f (as `pgrep -f` does).
+llm_job_procs() {  # [-f] process-name-regex
+    local fmt=comm= re=$1
+    if [[ $1 == -f ]]; then fmt=args= re=$2; fi
+    ps -u "$USER" -o pid=,rss=,"$fmt" | awk -v re="$re" \
+        '{ name = ""; for (i = 3; i <= NF; i++) name = name (i > 3 ? " " : "") $i
+           if (name ~ re) print $1, $2 }' | while read -r pid rss; do
+        if grep -qs "job_${SLURM_JOB_ID}\b" "/proc/$pid/cgroup"; then echo "$pid $rss"; fi
+    done
+    # Matching nothing is a normal result, not a failure: the callers run
+    # under `set -e`, and the trap that stops a server calls this last.
+    return 0
+}
+
+# Sample GPU VRAM in use and the host RSS of this job's matching processes every
+# few seconds into a TSV, in the background. Prints the sampler PID.
 llm_start_monitor() {  # out.tsv process-name-regex
     local out=$1 re=$2
     printf 'time_s\tvram_used_mib\thost_rss_mib\n' > "$out"
     (
         t0=$SECONDS
         while :; do
-            vram=$(rocm-smi --showmeminfo vram 2>/dev/null \
-                   | awk -F': ' '/Total Used Memory/ {s += $NF} END {printf "%d", s / 1048576}')
-            rss=$(ps -u "$USER" -o rss=,comm= | awk -v re="$re" '$2 ~ re {s += $1} END {printf "%d", s / 1024}')
+            vram=$(llm_vram_used_mib)
+            rss=$(llm_job_procs "$re" | awk '{s += $2} END {printf "%d", s / 1024}')
             printf '%d\t%s\t%s\n' $(( SECONDS - t0 )) "$vram" "$rss" >> "$out"
             sleep 3
         done
@@ -69,13 +106,15 @@ llm_stop() {  # pid process-name-regex
     kill -0 "$pid" 2>/dev/null && { echo "Server still alive after 30s; killing" >&2; kill -KILL "$pid"; }
     wait "$pid" 2>/dev/null || true
     sleep 2
-    if pgrep -u "$USER" -f "$re" >/dev/null; then
-        echo "WARNING: leftover processes:"; pgrep -u "$USER" -af "$re"
+    local left
+    left=$(llm_job_procs -f "$re")
+    if [[ -n $left ]]; then
+        echo "WARNING: leftover processes in this job:"
+        echo "$left" | while read -r p _; do ps -o pid=,args= -p "$p"; done
     else
         echo "Clean shutdown: no $re processes left"
     fi
-    echo "VRAM used after shutdown: $(rocm-smi --showmeminfo vram 2>/dev/null \
-        | awk -F': ' '/Total Used Memory/ {s += $NF} END {printf "%d", s / 1048576}') MiB"
+    echo "VRAM used after shutdown: $(llm_vram_used_mib) MiB"
 }
 
 llm_tunnel_hint() {  # port

@@ -40,16 +40,21 @@ What [`serve.slurm`](serve.slurm) does:
 2. Starts `ollama serve` under `srun` on one GCD, bound to `127.0.0.1` on a
    per-job port, probing only the ROCm backend. If Ollama does not report a
    ROCm GPU, the job **exits with an error** rather than serving from the CPU.
-3. On first use, imports the GGUF as `qwen3-32b-q4km-base`. This copies the
-   19.8 GB file into `$OLLAMA_MODELS` (default `$LLM_ROOT/ollama-models`) and
-   took 72–185 s. Later jobs reuse it.
+3. On first use, imports the GGUF as `qwen3-32b-q4km-base-<first 12 hex of
+   MODEL_SHA256>`. This copies the 19.8 GB file into `$OLLAMA_MODELS` (default
+   `$LLM_ROOT/ollama-models`) and took 72–185 s. Later jobs reuse it. The
+   checksum is in the name so that changing the model pin imports the new
+   weights instead of reusing the old ones; `ollama rm` an old base to reclaim
+   the disk.
 4. Creates the served model `qwen3-32b-q4km` from the base model, adding
    `num_ctx 4096` and `num_thread` = cores in the allocation. This is instant
    and copies nothing. Without `num_thread`, Ollama's runner starts 64 threads
    on an 8-core allocation and generates ~40% slower.
 5. Prints `ollama show` (architecture, quantisation, capabilities `tools`,
    `thinking`, `completion`; template source `gguf_chat_template`) and the
-   imported blob's SHA256, which must equal the GGUF's.
+   imported blob's SHA256. Ollama names the blob by its checksum, so the job
+   fails if it is not the pinned GGUF: the two runtimes then cannot be serving
+   different weights.
 
 Settings exported to the server: `OLLAMA_NUM_PARALLEL=1`,
 `OLLAMA_MAX_LOADED_MODELS=1`, `OLLAMA_CONTEXT_LENGTH=4096`,

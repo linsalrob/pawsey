@@ -23,8 +23,12 @@ fi
 module load "$LLAMA_ROCM_MODULE" "$LLAMA_CMAKE_MODULE"
 module -t list 2>&1
 
+# Reuse the source tree only if a previous run checked it out completely: a
+# fetch that failed part way leaves a .git directory with no commit, and
+# trusting that would skip the fetch on every later submission.
 src=$LLM_ROOT/src/llama.cpp-$LLAMA_REF
-if [[ ! -d $src/.git ]]; then
+if ! git -C "$src" rev-parse --verify -q HEAD >/dev/null 2>&1; then
+    rm -rf "$src"
     # Fetch just the one ref; works for a release tag or a full commit SHA.
     git init -q "$src"
     git -C "$src" fetch -q --depth 1 https://github.com/ggml-org/llama.cpp.git "$LLAMA_REF"
